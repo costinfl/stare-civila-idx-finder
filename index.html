@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stare Civilă IDX Finder</title>
+  <style>
+    :root { color-scheme: light; --ink:#182431; --muted:#607080; --line:#dce3e8; --blue:#165d87; --blue-dark:#104665; --paper:#fff; --wash:#f3f6f8; --green:#256a4b; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--wash); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { max-width:1180px; margin:0 auto; padding:28px 22px 56px; }
+    header { margin-bottom:22px; }
+    h1 { margin:0 0 7px; font-size:clamp(25px,4vw,36px); line-height:1.15; letter-spacing:-.035em; }
+    h2 { font-size:18px; margin:0 0 12px; }
+    p { margin:5px 0 0; color:var(--muted); }
+    .panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:20px; box-shadow:0 2px 8px #12283a0a; margin-bottom:18px; }
+    .filters { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    label { display:block; font-weight:650; margin:0 0 6px; }
+    input[type=text] { width:100%; border:1px solid #aebbc5; border-radius:7px; padding:10px 11px; font:inherit; color:var(--ink); }
+    input[type=text]:focus { outline:3px solid #165d8722; border-color:var(--blue); }
+    .hint { font-size:13px; color:var(--muted); margin-top:5px; }
+    .county-head { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:18px 0 10px; }
+    .county-head h2 { margin:0; }
+    .county-actions { display:flex; gap:12px; font-size:13px; }
+    button.link { background:none; color:var(--blue); border:0; padding:0; font:inherit; cursor:pointer; text-decoration:underline; }
+    .counties { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px 10px; border:1px solid var(--line); border-radius:8px; padding:12px; max-height:220px; overflow:auto; }
+    .county { display:flex; align-items:center; gap:7px; font-size:13px; margin:0; font-weight:450; white-space:nowrap; }
+    input[type=checkbox] { accent-color:var(--blue); width:15px; height:15px; margin:0; }
+    .actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:16px; }
+    button.action { border:0; border-radius:7px; padding:10px 15px; background:var(--blue); color:white; font:inherit; font-size:14px; font-weight:650; cursor:pointer; }
+    button.action:hover { background:var(--blue-dark); }
+    button.action.secondary { background:#e8eef2; color:var(--ink); }
+    button.action:disabled { opacity:.52; cursor:default; }
+    .progress-wrap { margin-top:15px; }
+    .progress-label { display:flex; justify-content:space-between; gap:12px; font-size:13px; color:var(--muted); margin-bottom:5px; }
+    progress { width:100%; height:10px; accent-color:var(--blue); }
+    #status { color:var(--ink); font-size:14px; min-height:22px; margin-top:7px; }
+    .toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    #count { color:var(--muted); font-size:14px; }
+    .table-wrap { overflow:auto; }
+    table { border-collapse:collapse; width:100%; min-width:850px; font-size:13px; }
+    th,td { text-align:left; vertical-align:top; padding:10px 9px; border-bottom:1px solid var(--line); }
+    th { background:#f7f9fa; color:#455564; font-size:12px; text-transform:uppercase; letter-spacing:.035em; position:sticky; top:0; }
+    a { color:var(--blue); }
+    .filename { font-weight:650; }
+    .empty { color:var(--muted); padding:18px 2px; }
+    .note { border-left:3px solid #83a9bd; padding:8px 11px; background:#f7fafb; color:#536676; font-size:13px; margin-top:14px; }
+    @media (max-width:850px) { .counties { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+    @media (max-width:560px) { main { padding:18px 12px 40px; } .panel { padding:15px; } .filters { grid-template-columns:1fr; } .counties { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Stare Civilă IDX Finder</h1>
+    <p>Search county archives one at a time, find records titled “stare civila”, and collect attached PDF index files whose names include <strong>IDX</strong>.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="filters-title">
+    <h2 id="filters-title">Search filters</h2>
+    <div class="filters">
+      <div>
+        <label for="titleTerm">Title contains</label>
+        <input id="titleTerm" type="text" value="stare civila">
+        <div class="hint">The catalogue also finds diacritic and hyphen variants, such as “Registru stare civilă”.</div>
+      </div>
+      <div>
+        <label for="pdfText">Attached PDF text contains (optional)</label>
+        <input id="pdfText" type="text" placeholder="Leave blank to collect all matching IDX files">
+        <div class="hint">Add a word such as “Popescu” to narrow the search using “Conținut text fișiere atașate UD”.</div>
+      </div>
+      <div>
+        <label for="cotaPrefix">Specific Cotă prefix (optional)</label>
+        <input id="cotaPrefix" type="text" placeholder="For one unit, e.g. PH-F-00006-209-5">
+        <div class="hint">Select the matching county above. A specific prefix searches only that county and is useful for checking one unit.</div>
+      </div>
+    </div>
+
+    <div class="county-head">
+      <h2>Counties <span id="selectedCount" class="hint"></span></h2>
+      <div class="county-actions"><button class="link" id="selectAll">Select all</button><button class="link" id="selectNone">Clear</button></div>
+    </div>
+    <div class="counties" id="counties" aria-label="County selection"></div>
+    <div class="note">Searches use <strong>Cotă starts with [county code]-</strong> and run counties sequentially. Each matching record page is checked for attached PDF filenames containing “IDX”. Requests are paced at no more than one every 1.25 seconds. A broad search checks each matching record page, so it can take much longer than 2–3 minutes; use a PDF text term or a specific Cotă prefix to narrow it.</div>
+
+    <div class="actions">
+      <button class="action" id="start">Search counties</button>
+      <button class="action secondary" id="stop" disabled>Stop after current request</button>
+      <button class="action secondary" id="downloadCsv" disabled>Download CSV</button>
+      <button class="action secondary" id="downloadZip" disabled>Download IDX PDFs as ZIP</button>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span id="progressText">Ready</span><span id="progressCount">0 / 0 counties</span></div>
+      <progress id="progress" max="1" value="0"></progress>
+      <div id="status" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="toolbar"><h2>Collected index PDFs</h2><span id="count">0 files</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>County</th><th>Index PDF</th><th>Call number</th><th>Record title</th><th>Open</th></tr></thead>
+        <tbody id="results"><tr><td class="empty" colspan="5">Start a search to collect IDX PDF links.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+<script>
+const countyList = [
+  ["Alba","AB-"],["Arad","AR-"],["Argeș","AG-"],["Bacău","BC-"],["Bihor","BH-"],["Bistrița-Năsăud","BN-"],["Botoșani","BT-"],["Brăila","BR-"],["Brașov","BV-"],["București","B-"],["Buzău","BZ-"],["Călărași","CL-"],["Caraș-Severin","CS-"],["Cluj","CJ-"],["Constanța","CT-"],["Covasna","CV-"],["Dâmbovița","DB-"],["Dolj","DJ-"],["Galați","GL-"],["Giurgiu","GR-"],["Gorj","GJ-"],["Harghita","HR-"],["Hunedoara","HD-"],["Ialomița","IL-"],["Iași","IS-"],["Ilfov","IF-"],["Maramureș","MM-"],["Mehedinți","MH-"],["Mureș","MS-"],["Neamț","NT-"],["Olt","OT-"],["Prahova","PH-"],["Sălaj","SJ-"],["Satu Mare","SM-"],["Sibiu","SB-"],["Suceava","SV-"],["Teleorman","TR-"],["Timiș","TM-"],["Tulcea","TL-"],["Vâlcea","VL-"],["Vaslui","VS-"],["Vrancea","VN-"]
+];
+const $ = (id) => document.getElementById(id);
+let results = [];
+let stopRequested = false;
+let running = false;
+
+function makeCountyInputs() {
+  const box = $("counties");
+  countyList.forEach(([name, prefix], i) => {
+    const label = document.createElement("label");
+    label.className = "county";
+    const input = document.createElement("input");
+    input.type = "checkbox"; input.checked = true; input.value = prefix; input.id = `county-${i}`;
+    input.addEventListener("change", updateSelected);
+    label.append(input, document.createTextNode(name));
+    box.append(label);
+  });
+  updateSelected();
+}
+function selectedCounties() { return [...$("counties").querySelectorAll("input:checked")].map(input => countyList.find(([,prefix]) => prefix === input.value)); }
+function updateSelected() { $("selectedCount").textContent = `(${selectedCounties().length} selected)`; }
+$("selectAll").onclick = () => { $("counties").querySelectorAll("input").forEach(input => input.checked = true); updateSelected(); };
+$("selectNone").onclick = () => { $("counties").querySelectorAll("input").forEach(input => input.checked = false); updateSelected(); };
+
+async function postJSON(path, body) {
+  const response = await fetch(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+  return data;
+}
+function status(text) { $("status").textContent = text; }
+function addResult(county, record, attachment) {
+  const key = `${attachment.pdf_url}|${record.record_id}`;
+  if (results.some(item => item.key === key)) return;
+  results.push({key, county, ...record, ...attachment});
+  renderResults();
+}
+function renderResults() {
+  const body = $("results");
+  body.replaceChildren();
+  if (!results.length) {
+    const row = body.insertRow(); const cell = row.insertCell(); cell.colSpan = 5; cell.className = "empty"; cell.textContent = "No IDX PDFs found yet.";
+  }
+  for (const item of results) {
+    const row = body.insertRow();
+    const values = [item.county, item.filename, item.call_number, item.title];
+    values.forEach((value, index) => { const cell = row.insertCell(); cell.textContent = value || ""; if (index === 1) cell.className = "filename"; });
+    const open = row.insertCell();
+    const pdf = document.createElement("a"); pdf.href = item.pdf_url; pdf.target = "_blank"; pdf.rel = "noopener"; pdf.textContent = "PDF"; open.append(pdf, document.createTextNode(" · "));
+    const record = document.createElement("a"); record.href = item.record_url; record.target = "_blank"; record.rel = "noopener"; record.textContent = "Record"; open.append(record);
+  }
+  $("count").textContent = `${results.length} file${results.length === 1 ? "" : "s"}`;
+  $("downloadCsv").disabled = !results.length;
+  $("downloadZip").disabled = !results.length;
+}
+function setRunning(value) { running = value; $("start").disabled = value; $("stop").disabled = !value; }
+
+$("start").onclick = async () => {
+  let counties = selectedCounties();
+  const titleTerm = $("titleTerm").value.trim();
+  const exactPrefix = $("cotaPrefix").value.trim().toUpperCase();
+  if (exactPrefix) {
+    const matchingCounty = countyList.find(([, prefix]) => exactPrefix.startsWith(prefix));
+    if (!matchingCounty || !counties.some(([, prefix]) => prefix === matchingCounty[1])) { status("Select the county that matches the specific Cotă prefix."); return; }
+    counties = [matchingCounty];
+  }
+  if (!counties.length) { status("Select at least one county."); return; }
+  if (!titleTerm) { status("Enter a title search term."); return; }
+  stopRequested = false; results = []; renderResults(); setRunning(true);
+  $("progress").max = counties.length; $("progress").value = 0;
+  let finished = 0, found = 0, errorCount = 0;
+  const pdfText = $("pdfText").value.trim();
+  for (const [county, prefix] of counties) {
+    if (stopRequested) break;
+    let page = 1;
+    let countyRows = 0;
+    try {
+      while (!stopRequested) {
+        $("progressText").textContent = `Searching ${county} · page ${page}`;
+        status(`Searching titles and attached PDF text${pdfText ? ` for “${pdfText}”` : ""}; inspecting record attachments for IDX files.`);
+        const data = await postJSON("/api/search-page", {prefix, cota_prefix:$("cotaPrefix").value.trim(), title_term:titleTerm, pdf_text:pdfText, page});
+        const rows = data.rows || [];
+        if (!rows.length) break;
+        countyRows += rows.length;
+        for (let start = 0; start < rows.length && !stopRequested; start += 10) {
+          const batch = rows.slice(start, start + 10);
+          const attachmentData = await postJSON("/api/attachments", {rows:batch});
+          for (const record of attachmentData.records || []) {
+            for (const attachment of record.attachments || []) addResult(county, record, attachment);
+          }
+          found = results.length;
+          status(`${county}: checked ${Math.min(start + batch.length, rows.length)} of ${rows.length} records on page ${page}; ${found} IDX PDF${found === 1 ? "" : "s"} collected so far.`);
+        }
+        if (rows.length < 100) break;
+        page++;
+      }
+    } catch (error) {
+      errorCount++;
+      status(`${county}: ${error.message}. Continuing with the next county.`);
+      await new Promise(resolve => setTimeout(resolve, 800));
+    }
+    finished++;
+    $("progress").value = finished;
+    $("progressCount").textContent = `${finished} / ${counties.length} counties`;
+    $("progressText").textContent = `${county} complete · ${countyRows} matching records checked`;
+  }
+  setRunning(false);
+  if (stopRequested) status(`Stopped. ${results.length} IDX PDF${results.length === 1 ? "" : "s"} collected so far.`);
+  else status(`Finished. Collected ${results.length} IDX PDF${results.length === 1 ? "" : "s"}.${errorCount ? ` ${errorCount} county search${errorCount === 1 ? " had" : "es had"} errors; see the latest status message.` : ""}`);
+};
+$("stop").onclick = () => { stopRequested = true; status("Stopping after the current archive request."); };
+
+function csvCell(value) { return `"${String(value ?? "").replaceAll('"','""')}"`; }
+$("downloadCsv").onclick = () => {
+  const header = ["county","filename","size","call_number","title","record_id","record_url","pdf_url"];
+  const lines = [header, ...results.map(item => [item.county,item.filename,item.size,item.call_number,item.title,item.record_id,item.record_url,item.pdf_url])].map(row => row.map(csvCell).join(","));
+  const blob = new Blob(["\ufeff" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "stare-civila-idx-finder-index.csv"; link.click(); URL.revokeObjectURL(link.href);
+};
+$("downloadZip").onclick = async () => {
+  const button = $("downloadZip"); button.disabled = true; button.textContent = "Preparing ZIP…";
+  try {
+    const response = await fetch("/api/download-zip", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({files:results.map(({pdf_url,filename,record_url,call_number}) => ({pdf_url,filename,record_url,call_number}))})});
+    if (!response.ok) { const data = await response.json(); throw new Error(data.error || `Download failed (${response.status})`); }
+    const blob = await response.blob(); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "stare-civila-idx-finder-files.zip"; link.click(); URL.revokeObjectURL(link.href);
+  } catch (error) { status(`Could not prepare ZIP: ${error.message}`); }
+  finally { button.disabled = !results.length; button.textContent = "Download IDX PDFs as ZIP"; }
+};
+
+makeCountyInputs();
+</script>
+</body>
+</html>
