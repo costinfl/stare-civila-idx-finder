@@ -210,9 +210,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         path = urllib.parse.urlparse(self.path).path
-        if path == "/":
+        if path in ("/", "/browse", "/browse.html"):
+            page_name = "browse.html" if path in ("/browse", "/browse.html") else "index.html"
             try:
-                with open("index.html", "rb") as page:
+                with open(page_name, "rb") as page:
                     self.send_bytes(200, page.read(), "text/html; charset=utf-8")
             except OSError as error:
                 self.send_json(500, {"error": str(error)})

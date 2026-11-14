@@ -34,4 +34,4 @@ The catalogue endpoints used are:
 - `https://descopera.arhivelenationale.ro/wp-admin/admin-ajax.php?action=get_advanced_search`
 - `https://descopera.arhivelenationale.ro/cota/?cid={record_id}`
 - `https://descopera.arhivelenationale.ro/api/media/file?id={record_id}&type=fisiere&mediaId={media_id}`
-
+Open [http://127.0.0.1:8765/browse](http://127.0.0.1:8765/browse) to load a downloaded ZIP into the PDF content browser. It extracts each PDF's selectable text into visual table rows and an in-memory SQLite database, then lets you search, sort, and filter by file, page, line, or text. ZIP contents remain in the browser and are cleared when the tab is closed or reloaded. The browser fetches JSZip, PDF.js, and SQLite WebAssembly from their CDNs the first time; image-only scans need OCR before they contain searchable text.

@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Browse IDX PDF contents · Stare Civilă IDX Finder</title>
+  <style>
+    :root { color-scheme:light; --ink:#182431; --muted:#607080; --line:#dce3e8; --blue:#165d87; --blue-dark:#104665; --paper:#fff; --wash:#f3f6f8; --green:#256a4b; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--wash); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { max-width:1360px; margin:0 auto; padding:28px 22px 56px; }
+    header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:22px; }
+    h1 { margin:0 0 7px; font-size:clamp(25px,4vw,36px); line-height:1.15; letter-spacing:-.035em; }
+    h2 { font-size:18px; margin:0 0 12px; }
+    p { margin:5px 0 0; color:var(--muted); }
+    a { color:var(--blue); }
+    .panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:20px; box-shadow:0 2px 8px #12283a0a; margin-bottom:18px; }
+    .drop { border:2px dashed #9aafbd; border-radius:10px; padding:24px; text-align:center; background:#f8fbfc; transition:.15s ease; }
+    .drop.drag { background:#eaf4f8; border-color:var(--blue); }
+    .drop strong { display:block; font-size:16px; margin-bottom:4px; }
+    .hint { color:var(--muted); font-size:13px; }
+    input[type=file] { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
+    input[type=search],input[type=text],select { width:100%; border:1px solid #aebbc5; border-radius:7px; padding:9px 10px; font:inherit; color:var(--ink); background:white; }
+    input:focus,select:focus { outline:3px solid #165d8722; border-color:var(--blue); }
+    button { border:0; border-radius:7px; padding:9px 14px; background:var(--blue); color:white; font:inherit; font-weight:650; cursor:pointer; }
+    button:hover { background:var(--blue-dark); }
+    button:disabled { opacity:.5; cursor:default; }
+    button.secondary { color:var(--ink); background:#e8eef2; }
+    .browse { display:inline-block; margin-top:12px; }
+    .statusline { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-top:14px; color:var(--muted); font-size:13px; }
+    progress { width:100%; height:9px; margin-top:8px; accent-color:var(--blue); }
+    #status { min-height:22px; color:var(--ink); font-size:14px; margin-top:7px; }
+    .toolbar { display:grid; grid-template-columns:minmax(220px,2fr) minmax(160px,1fr) 1fr; gap:10px; align-items:center; margin-bottom:10px; }
+    #rowCount { color:var(--muted); font-size:13px; }
+    .table-wrap { overflow:auto; max-height:68vh; border:1px solid var(--line); border-radius:8px; }
+    table { border-collapse:collapse; width:100%; min-width:900px; font-size:13px; }
+    th,td { text-align:left; vertical-align:top; padding:8px 9px; border-bottom:1px solid var(--line); }
+    thead { position:sticky; top:0; z-index:2; }
+    th { background:#f0f4f6; color:#455564; font-size:12px; text-transform:uppercase; letter-spacing:.035em; }
+    th button { border:0; padding:0; background:transparent; color:inherit; font:inherit; text-transform:inherit; letter-spacing:inherit; text-align:left; }
+    th button:hover { color:var(--blue); background:transparent; }
+    thead .filters th { top:35px; padding:5px; background:#f7f9fa; }
+    .filters input { min-width:76px; padding:6px 7px; font-size:12px; }
+    td.text-cell { min-width:460px; white-space:pre-wrap; overflow-wrap:anywhere; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; }
+    td.file-cell { min-width:190px; overflow-wrap:anywhere; }
+    .empty { color:var(--muted); padding:20px 10px; text-align:center; }
+    .note { border-left:3px solid #83a9bd; padding:8px 11px; background:#f7fafb; color:#536676; font-size:13px; margin-top:14px; }
+    @media(max-width:720px) { main{padding:18px 12px 40px}.panel{padding:15px}header{display:block}.toolbar{grid-template-columns:1fr}.statusline{align-items:flex-start;flex-direction:column} }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.2/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.16.0/sql-wasm.js"></script>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Browse IDX PDF contents</h1>
+      <p>Open a ZIP of downloaded indexes. PDF text is extracted in this browser and held in a temporary SQLite database in memory.</p>
+    </div>
+    <a href="/">← Back to county search</a>
+  </header>
+
+  <section class="panel" aria-label="ZIP upload">
+    <div class="drop" id="dropzone">
+      <strong>Drop a downloaded ZIP here</strong>
+      <span class="hint">or choose a file from this device</span>
+      <div><button class="browse" id="browseButton" type="button">Choose ZIP file</button></div>
+      <input id="zipInput" type="file" accept=".zip,application/zip">
+    </div>
+    <div class="statusline"><span id="zipName">No ZIP loaded</span><span id="progressLabel">Ready</span></div>
+    <progress id="progress" max="1" value="0"></progress>
+    <div id="status" role="status" aria-live="polite">Choose a ZIP containing text-based PDF index files.</div>
+    <div class="note">The ZIP stays on your computer. Search, sorting, and filters run against this browser tab’s in-memory database; closing or reloading the page clears it. The first load needs internet access to fetch the ZIP/PDF/SQLite browser libraries. Image-only scans have no embedded text to extract and need OCR first.</div>
+  </section>
+
+  <section class="panel" aria-label="Extracted PDF rows">
+    <h2>Extracted table rows</h2>
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Search all extracted text…" aria-label="Search all extracted text" disabled>
+      <select id="fileFilter" aria-label="Filter by PDF file" disabled><option value="">All PDF files</option></select>
+      <div id="rowCount">No rows loaded</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th><button type="button" data-sort="file">PDF file <span></span></button></th>
+            <th><button type="button" data-sort="page">Page <span></span></button></th>
+            <th><button type="button" data-sort="line">Line <span></span></button></th>
+            <th><button type="button" data-sort="text">Extracted table row <span></span></button></th>
+          </tr>
+          <tr class="filters">
+            <th><input id="fileColumn" type="text" placeholder="Filter file" aria-label="Filter file name" disabled></th>
+            <th><input id="pageColumn" type="text" inputmode="numeric" placeholder="Page" aria-label="Filter page" disabled></th>
+            <th><input id="lineColumn" type="text" inputmode="numeric" placeholder="Line" aria-label="Filter line" disabled></th>
+            <th><input id="textColumn" type="text" placeholder="Filter row text" aria-label="Filter row text" disabled></th>
+          </tr>
+        </thead>
+        <tbody id="rows"><tr><td colspan="4" class="empty">Your extracted rows will appear here.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+<script type="module">
+import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/build/pdf.mjs";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/build/pdf.worker.mjs";
+
+const $ = id => document.getElementById(id);
+const pageSize = 100;
+const sqlBase = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.16.0/";
+let db = null;
+let currentSort = "file";
+let sortDirection = "ASC";
+let pageNumber = 0;
+let totalRows = 0;
+let loading = false;
+let debounce = 0;
+const searchableInputs = ["search", "fileColumn", "pageColumn", "lineColumn", "textColumn"];
+
+function normalize(value) {
+  return String(value ?? "").toLocaleLowerCase("ro").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[șş]/g, "s").replace(/[țţ]/g, "t");
+}
+function escapeLike(value) { return normalize(value).replace(/[\\%_]/g, "\\$&"); }
+function status(message) { $("status").textContent = message; }
+async function ensureDatabase() {
+  if (db) return;
+  if (!window.initSqlJs) throw new Error("Could not load SQLite. Check your internet connection and reload the page.");
+  const SQL = await window.initSqlJs({ locateFile: name => sqlBase + name });
+  db = new SQL.Database();
+  db.run("CREATE TABLE pdf_rows (id INTEGER PRIMARY KEY, file TEXT NOT NULL, file_norm TEXT NOT NULL, page INTEGER NOT NULL, line INTEGER NOT NULL, text TEXT NOT NULL, text_norm TEXT NOT NULL)");
+  db.run("CREATE INDEX idx_pdf_rows_file ON pdf_rows(file_norm)");
+  db.run("CREATE INDEX idx_pdf_rows_page ON pdf_rows(page)");
+}
+
+function visualLines(items) {
+  const positioned = items.filter(item => typeof item.str === "string" && item.str.trim()).map(item => ({
+    text: item.str.replace(/\s+/g, " ").trim(), x: item.transform?.[4] ?? 0, y: item.transform?.[5] ?? 0,
+    width: item.width ?? 0
+  })).sort((a, b) => b.y - a.y || a.x - b.x);
+  const lines = [];
+  for (const item of positioned) {
+    let line = lines.at(-1);
+    if (!line || Math.abs(line.y - item.y) > 2.5) {
+      line = { y: item.y, items: [] };
+      lines.push(line);
+    }
+    line.items.push(item);
+  }
+  return lines.map(line => {
+    line.items.sort((a, b) => a.x - b.x);
+    let output = "", previous = null;
+    for (const item of line.items) {
+      if (previous) {
+        const gap = item.x - (previous.x + previous.width);
+        output += gap > 22 ? "\t" : (gap > 1.5 ? " " : "");
+      }
+      output += item.text;
+      previous = item;
+    }
+    return output.trim();
+  }).filter(Boolean);
+}
+
+function insertRows(filename, page, lines) {
+  const insert = db.prepare("INSERT INTO pdf_rows (file,file_norm,page,line,text,text_norm) VALUES (?,?,?,?,?,?)");
+  for (let index = 0; index < lines.length; index++) {
+    const text = lines[index];
+    insert.run([filename, normalize(filename), page, index + 1, text, normalize(text)]);
+  }
+  insert.free();
+}
+
+async function indexPdf(entry, fileIndex, totalFiles) {
+  const bytes = await entry.async("uint8array");
+  const loadingTask = pdfjsLib.getDocument({ data: bytes, useSystemFonts: true });
+  const pdf = await loadingTask.promise;
+  let extracted = 0;
+  for (let page = 1; page <= pdf.numPages; page++) {
+    const pdfPage = await pdf.getPage(page);
+    const content = await pdfPage.getTextContent({ disableNormalization: false });
+    const lines = visualLines(content.items);
+    if (lines.length) {
+      db.run("BEGIN");
+      try {
+        insertRows(entry.name, page, lines);
+        db.run("COMMIT");
+      } catch (error) {
+        db.run("ROLLBACK");
+        throw error;
+      }
+      extracted += lines.length;
+    }
+    if (page % 5 === 0 || page === pdf.numPages) {
+      $("progressLabel").textContent = `PDF ${fileIndex}/${totalFiles} · page ${page}/${pdf.numPages}`;
+      status(`Extracting ${entry.name.split("/").pop()} · ${extracted.toLocaleString()} table lines so far`);
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+    pdfPage.cleanup();
+  }
+  await pdf.destroy();
+  return { pages: pdf.numPages, lines: extracted };
+}
+
+function setBusy(value) {
+  loading = value;
+  $("browseButton").disabled = value;
+  $("zipInput").disabled = value;
+}
+
+async function loadZip(file) {
+  if (loading || !file) return;
+  if (!file.name.toLowerCase().endsWith(".zip")) { status("Choose a .zip file."); return; }
+  setBusy(true);
+  $("zipName").textContent = file.name;
+  $("progress").value = 0;
+  $("progressLabel").textContent = "Opening ZIP…";
+  status("Reading the ZIP locally in this browser…");
+  $("rows").innerHTML = '<tr><td colspan="4" class="empty">Extracting PDF text…</td></tr>';
+  try {
+    if (!window.JSZip) throw new Error("Could not load the ZIP reader. Check your internet connection and reload the page.");
+    await ensureDatabase();
+    db.run("DELETE FROM pdf_rows");
+    const zip = await window.JSZip.loadAsync(file, { checkCRC32: false, createFolders: false });
+    const pdfEntries = Object.values(zip.files).filter(item => !item.dir && item.name.toLowerCase().endsWith(".pdf"));
+    if (!pdfEntries.length) throw new Error("This ZIP contains no PDF files.");
+    $("progress").max = pdfEntries.length;
+    let done = 0, failed = 0, pages = 0;
+    for (const [index, entry] of pdfEntries.entries()) {
+      $("progressLabel").textContent = `PDF ${index + 1}/${pdfEntries.length}`;
+      try {
+        const result = await indexPdf(entry, index + 1, pdfEntries.length);
+        pages += result.pages;
+        done++;
+      } catch (error) {
+        failed++;
+        console.warn(`Could not extract ${entry.name}`, error);
+      }
+      $("progress").value = index + 1;
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+    const files = db.exec("SELECT DISTINCT file FROM pdf_rows ORDER BY file COLLATE NOCASE")[0]?.values.map(row => row[0]) ?? [];
+    const select = $("fileFilter");
+    select.replaceChildren(new Option("All PDF files", ""));
+    files.forEach(name => select.add(new Option(name, name)));
+    [...searchableInputs, "fileFilter"].forEach(id => $(id).disabled = false);
+    const count = db.exec("SELECT COUNT(*) FROM pdf_rows")[0].values[0][0];
+    status(`${done} of ${pdfEntries.length} PDFs indexed · ${pages.toLocaleString()} pages · ${count.toLocaleString()} table lines${failed ? ` · ${failed} PDF${failed === 1 ? "" : "s"} could not be read` : ""}.`);
+    $("progressLabel").textContent = "Complete";
+    refreshTable(true);
+  } catch (error) {
+    console.error(error);
+    status(error.message || "Could not read this ZIP.");
+    $("rows").innerHTML = `<tr><td colspan="4" class="empty">${escapeHtml(error.message || "Could not read this ZIP.")}</td></tr>`;
+  } finally {
+    setBusy(false);
+  }
+}
+
+function escapeHtml(text) { return String(text).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char])); }
+
+function makeWhere() {
+  const clauses = [], params = [];
+  const globalSearch = escapeLike($("search").value.trim());
+  if (globalSearch) { clauses.push("text_norm LIKE ? ESCAPE '\\'"); params.push(`%${globalSearch}%`); }
+  const file = $("fileFilter").value;
+  if (file) { clauses.push("file = ?"); params.push(file); }
+  const fileTerm = escapeLike($("fileColumn").value.trim());
+  if (fileTerm) { clauses.push("file_norm LIKE ? ESCAPE '\\'"); params.push(`%${fileTerm}%`); }
+  const page = $("pageColumn").value.trim();
+  if (page) { if (!/^\d+$/.test(page)) clauses.push("0"); else { clauses.push("page = ?"); params.push(Number(page)); } }
+  const line = $("lineColumn").value.trim();
+  if (line) { if (!/^\d+$/.test(line)) clauses.push("0"); else { clauses.push("line = ?"); params.push(Number(line)); } }
+  const text = escapeLike($("textColumn").value.trim());
+  if (text) { clauses.push("text_norm LIKE ? ESCAPE '\\'"); params.push(`%${text}%`); }
+  return { sql: clauses.length ? ` WHERE ${clauses.join(" AND ")}` : "", params };
+}
+
+function runQuery(sql, params = []) {
+  const statement = db.prepare(sql);
+  statement.bind(params);
+  const result = [];
+  while (statement.step()) result.push(statement.getAsObject());
+  statement.free();
+  return result;
+}
+
+function refreshTable(resetPage = false) {
+  if (!db) return;
+  if (resetPage) pageNumber = 0;
+  const where = makeWhere();
+  totalRows = runQuery(`SELECT COUNT(*) AS count FROM pdf_rows${where.sql}`, where.params)[0].count;
+  const sortColumns = {file:"file COLLATE NOCASE", page:"page", line:"line", text:"text_norm"};
+  const rows = runQuery(`SELECT file,page,line,text FROM pdf_rows${where.sql} ORDER BY ${sortColumns[currentSort]} ${sortDirection}, file COLLATE NOCASE, page, line LIMIT ? OFFSET ?`, [...where.params, pageSize, pageNumber * pageSize]);
+  const tbody = $("rows");
+  tbody.replaceChildren();
+  if (!rows.length) {
+    const tr = tbody.insertRow(), td = tr.insertCell(); td.colSpan = 4; td.className = "empty"; td.textContent = totalRows ? "No rows on this page." : "No rows match these search terms or filters.";
+  } else for (const item of rows) {
+    const tr = tbody.insertRow();
+    const file = tr.insertCell(); file.className = "file-cell"; file.textContent = item.file;
+    tr.insertCell().textContent = item.page;
+    tr.insertCell().textContent = item.line;
+    const text = tr.insertCell(); text.className = "text-cell"; text.textContent = item.text;
+  }
+  const first = totalRows ? pageNumber * pageSize + 1 : 0;
+  const last = Math.min((pageNumber + 1) * pageSize, totalRows);
+  $("rowCount").textContent = `${first.toLocaleString()}–${last.toLocaleString()} of ${totalRows.toLocaleString()} rows`;
+  for (const button of document.querySelectorAll("th button[data-sort]")) button.querySelector("span").textContent = button.dataset.sort === currentSort ? (sortDirection === "ASC" ? " ↑" : " ↓") : "";
+  updatePagingControls();
+}
+
+function updatePagingControls() {
+  let controls = $("paging");
+  if (!controls) {
+    controls = document.createElement("div"); controls.id = "paging"; controls.className = "statusline";
+    const tableWrap = document.querySelector(".table-wrap"); tableWrap.after(controls);
+  }
+  controls.replaceChildren();
+  const left = document.createElement("span"); left.textContent = `Page ${totalRows ? pageNumber + 1 : 0} of ${Math.max(1, Math.ceil(totalRows / pageSize)).toLocaleString()}`;
+  const buttons = document.createElement("span");
+  const previous = document.createElement("button"); previous.type = "button"; previous.className = "secondary"; previous.textContent = "Previous"; previous.disabled = pageNumber === 0; previous.onclick = () => { pageNumber--; refreshTable(); };
+  const next = document.createElement("button"); next.type = "button"; next.className = "secondary"; next.style.marginLeft = "8px"; next.textContent = "Next"; next.disabled = (pageNumber + 1) * pageSize >= totalRows; next.onclick = () => { pageNumber++; refreshTable(); };
+  buttons.append(previous, next); controls.append(left, buttons);
+}
+
+$("browseButton").addEventListener("click", () => $("zipInput").click());
+$("zipInput").addEventListener("change", event => loadZip(event.target.files?.[0]));
+const dropzone = $("dropzone");
+for (const name of ["dragenter", "dragover"]) dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.add("drag"); });
+for (const name of ["dragleave", "drop"]) dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.remove("drag"); });
+dropzone.addEventListener("drop", event => loadZip(event.dataTransfer.files?.[0]));
+for (const id of searchableInputs) $(id).addEventListener("input", () => { clearTimeout(debounce); debounce = setTimeout(() => refreshTable(true), 180); });
+$("fileFilter").addEventListener("change", () => refreshTable(true));
+document.querySelectorAll("th button[data-sort]").forEach(button => button.addEventListener("click", () => {
+  if (currentSort === button.dataset.sort) sortDirection = sortDirection === "ASC" ? "DESC" : "ASC";
+  else { currentSort = button.dataset.sort; sortDirection = "ASC"; }
+  refreshTable(true);
+}));
+</script>
+</body>
+</html>
