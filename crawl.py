@@ -32,7 +32,7 @@ STORE = ROOT / "idx_store" / "listings"
 SITE_DATA = ROOT / "site" / "data"
 PHRASES = ["Tip eveniment", "Imagine PDF"]
 PAGE_SIZE = 100
-MAX_PAGES = 2000
+MAX_PAGES = 50
 
 
 def listing_url(prefix: str, phrase: str, page: int) -> str:
@@ -76,22 +76,39 @@ def fetch_page(prefix: str, phrase: str, page: int) -> tuple[list[dict], int | N
     return rows, int(holder.group(1)) if holder else None
 
 
+RESULT_CAP = 5000  # the archive never returns more than 50 pages of 100
+SPLIT_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-()_. "
+
+
+def crawl_prefix(prefix: str, phrase: str, records: dict[str, dict], label: str) -> int | None:
+    """Collect every listing row for one Cotă prefix, splitting it if capped."""
+    page, seen, total = 1, 0, None
+    while page <= MAX_PAGES:
+        rows, page_total = fetch_page(prefix, phrase, page)
+        if page == 1:
+            total = page_total
+        for row in rows:
+            records.setdefault(row["record_id"], row)
+        seen += len(rows)
+        print(f"  {label} · {prefix} · “{phrase}” · page {page}: {len(rows)} rows ({len(records)} unique)", flush=True)
+        if len(rows) < PAGE_SIZE:
+            return total
+        page += 1
+    if seen >= RESULT_CAP:
+        # The list was truncated: search each longer prefix separately. Empty
+        # children cost one request each; only capped prefixes get here.
+        print(f"  {prefix} hit the {RESULT_CAP}-result cap; splitting", flush=True)
+        for char in SPLIT_CHARS:
+            crawl_prefix(prefix + char, phrase, records, label)
+    return total
+
+
 def crawl_county(county: dict) -> dict:
     prefix = county["prefix"]
     records: dict[str, dict] = {}
     totals: dict[str, int | None] = {}
     for phrase in PHRASES:
-        page = 1
-        while page <= MAX_PAGES:
-            rows, total = fetch_page(prefix, phrase, page)
-            if page == 1:
-                totals[phrase] = total
-            for row in rows:
-                records.setdefault(row["record_id"], row)
-            print(f"  {county['name']} · “{phrase}” · page {page}: {len(rows)} rows ({len(records)} unique)", flush=True)
-            if len(rows) < PAGE_SIZE:
-                break
-            page += 1
+        totals[phrase] = crawl_prefix(prefix, phrase, records, county["name"])
     return {
         "name": county["name"],
         "prefix": prefix,
