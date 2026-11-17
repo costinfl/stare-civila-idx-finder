@@ -1,6 +1,25 @@
 # Stare Civilă IDX Finder
 
-**Suggested GitHub repository:** `stare-civila-idx-finder`
+**Live catalogue (GitHub Pages):** https://costinfl.github.io/stare-civila-idx-finder/
+
+## Static catalogue (GitHub Pages)
+
+The archive sends no CORS headers, so a static site cannot query it live. Instead `crawl.py` builds a catalogue once and the Pages site (`site/`) searches it entirely in the browser — visitors send no requests to the Archives.
+
+How the catalogue is found without opening record pages: IDX PDFs are text reports with fixed column headers (`Nume`, `Localitate`, `Tip eveniment`, `Imagine PDF`), and the archive's **Conținut text fișiere atașate UD** search (`FieldId=-999005`) indexes that text. Searching it for `Tip eveniment` (plus `Imagine PDF`, which a few Alba indexes use) per county prefix returns exactly the records that carry an IDX file — about 500 listing requests in total, one every 1.25 s.
+
+```powershell
+python crawl.py              # crawl counties not yet in idx_store/, then export site/data/catalogue.json
+python crawl.py --refresh    # re-crawl everything
+python crawl.py --only PH-   # one county
+python crawl.py --export     # rebuild site/data from idx_store/ only
+```
+
+`idx_store/` (git-ignored) holds the per-county listings so an interrupted crawl resumes. The **Refresh catalogue** workflow re-runs the crawl on demand and commits the new catalogue; **Deploy site to GitHub Pages** publishes `site/` on every change to `main`. One-time setup: *Settings → Pages → Build and deployment → Source: GitHub Actions*.
+
+Note: București's archive code in the Cotă field is `MB`, not `B`; the local tool now uses `MB-`.
+
+## Local live-search tool
 
 The earlier empty-file conclusion was based on the wrong field: `Denumire fișier atașat` did not find the example record. Your example at [record 13913618](https://descopera.arhivelenationale.ro/cota/?cid=13913618) confirms that attached files are visible on the record page; its IDX file is `PH-FD-00006-209-5(PR6)_IDX.pdf`.
 

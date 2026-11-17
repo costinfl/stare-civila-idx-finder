@@ -25,7 +25,7 @@ _rate_lock = threading.Lock()
 _last_request = 0.0
 
 # Archive codes used in the Cotă field. București is a municipality, searched
-# once with its archive code B, although the navigation tree has two branches.
+# once with its archive code MB, although the navigation tree has two branches.
 COUNTIES = [
     {"name": "Alba", "prefix": "AB-"},
     {"name": "Arad", "prefix": "AR-"},
@@ -36,7 +36,7 @@ COUNTIES = [
     {"name": "Botoșani", "prefix": "BT-"},
     {"name": "Brăila", "prefix": "BR-"},
     {"name": "Brașov", "prefix": "BV-"},
-    {"name": "București", "prefix": "B-"},
+    {"name": "București", "prefix": "MB-"},
     {"name": "Buzău", "prefix": "BZ-"},
     {"name": "Călărași", "prefix": "CL-"},
     {"name": "Caraș-Severin", "prefix": "CS-"},
