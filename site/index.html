@@ -42,6 +42,15 @@
     .empty { color:var(--muted); padding:18px 4px; }
     .more { text-align:center; margin-top:14px; }
     footer { color:var(--muted); font-size:12.5px; margin-top:24px; }
+    details.progress { margin-top:12px; border-top:1px solid var(--line); padding-top:10px; font-size:13px; }
+    details.progress summary { cursor:pointer; color:var(--muted); }
+    details.progress summary strong { color:var(--ink); }
+    .bar { height:8px; background:var(--tab); border-radius:4px; overflow:hidden; margin:6px 0 2px; }
+    .bar > span { display:block; height:100%; background:var(--blue); }
+    .bar.small { height:6px; min-width:80px; margin:6px 0 0; }
+    table.counties { margin-top:10px; font-size:12.5px; }
+    table.counties td, table.counties th { padding:5px 8px; }
+    table.counties td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
     [hidden] { display:none !important; }
     @media (max-width:760px) {
       main { padding:18px 16px 40px; }
@@ -78,6 +87,16 @@
       </div>
       <div class="meta"><span id="n-count" role="status" aria-live="polite">Loading name index…</span><button id="n-csv" disabled>Download results as CSV</button></div>
       <div class="hint">Each word matches the start of a name part, ignoring diacritics: “pop ion” finds “Popescu Ion” and “Ioana Popa”. Use at least 3 letters per word; the rarest word decides how much is downloaded.</div>
+      <details class="progress" id="progress" hidden>
+        <summary id="progress-summary"></summary>
+        <div class="bar" aria-hidden="true"><span id="progress-bar"></span></div>
+        <div class="table-wrap">
+          <table class="counties">
+            <thead><tr><th>County</th><th>Registers indexed</th><th></th><th>Names</th><th>Last crawled</th></tr></thead>
+            <tbody id="progress-rows"></tbody>
+          </table>
+        </div>
+      </details>
     </section>
     <section class="panel">
       <div class="table-wrap">
@@ -233,10 +252,38 @@ async function loadNames() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     names = await response.json();
     names.keys = Object.keys(names.shards);
+    renderProgress();
     $("n-count").textContent = `${fmt(names.entries)} names indexed from ${fmt(names.records)} of ${fmt(data.items.length)} registers so far. Type a name to search.`;
   } catch {
     $("n-count").textContent = "The name index is not published yet. Use the Registers tab meanwhile.";
   }
+}
+function runDate(stamp) {
+  const m = /^(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)/.exec(stamp || "");
+  return m ? `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]} UTC` : "";
+}
+function renderProgress() {
+  const progress = names.progress || {};
+  const total = data.items.length, pct = (n, d) => d ? (100 * n / d) : 0;
+  const latest = Object.values(progress).map(p => p.last_run).sort().pop();
+  $("progress-summary").innerHTML = "";
+  const strong = document.createElement("strong");
+  strong.textContent = `Index progress: ${fmt(names.records)} of ${fmt(total)} registers (${pct(names.records, total).toFixed(1)}%)`;
+  $("progress-summary").append(strong, ` · ${fmt(names.entries)} names · last crawl ${runDate(latest) || "—"}`);
+  $("progress-bar").style.width = `${pct(names.records, total)}%`;
+  const body = $("progress-rows"); body.replaceChildren();
+  data.counties.forEach((county) => {
+    const p = progress[county.prefix.replace(/-$/, "")] || { done: 0, entries: 0, errors: 0 };
+    const r = body.insertRow();
+    r.insertCell().textContent = county.name;
+    const done = r.insertCell(); done.className = "num";
+    done.textContent = `${fmt(p.done)} / ${fmt(county.count)}${p.errors ? ` (${fmt(p.errors)} failed)` : ""}`;
+    const barCell = r.insertCell(); const bar = document.createElement("div"); bar.className = "bar small";
+    const fill = document.createElement("span"); fill.style.width = `${pct(p.done, county.count)}%`; bar.append(fill); barCell.append(bar);
+    const n = r.insertCell(); n.className = "num"; n.textContent = fmt(p.entries);
+    r.insertCell().textContent = runDate(p.last_run);
+  });
+  $("progress").hidden = false;
 }
 function shardsFor(term) {
   return names.keys.filter(k => {

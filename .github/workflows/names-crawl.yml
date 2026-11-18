@@ -53,3 +53,12 @@ jobs:
             git -C names-data push -q origin HEAD:names-data
           done
           python names.py --store names-data/names --stats
+      - name: Progress summary
+        if: always()
+        run: |
+          {
+            echo "### IDX name crawl progress"
+            echo '```'
+            python names.py --store names-data/names --stats
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

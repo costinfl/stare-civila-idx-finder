@@ -67,9 +67,14 @@ def compact(record_id: int, entry: dict) -> list:
             entry.get("act", ""), entry.get("page", ""), int(image.group(1)) if image else 0]
 
 
-def load_rows(store: Path) -> tuple[list[str], list[set[str]], int]:
+def load_rows(store: Path) -> tuple[list[str], list[set[str]], dict[str, dict]]:
+    """Return rows, their tokens, and per-county progress keyed by county code."""
     latest: dict[int, dict] = {}
+    county_of: dict[int, str] = {}
+    last_run: dict[str, str] = {}
     for path in sorted(store.glob("*/*.jsonl")):
+        county = path.parent.name
+        last_run[county] = max(last_run.get(county, ""), path.stem)
         for line in path.read_text(encoding="utf-8").splitlines():
             try:
                 item = json.loads(line)
@@ -77,16 +82,22 @@ def load_rows(store: Path) -> tuple[list[str], list[set[str]], int]:
                 continue
             if item["id"] not in latest or not item.get("error"):
                 latest[item["id"]] = item
+                county_of[item["id"]] = county
     rows: list[str] = []
     toks: list[set[str]] = []
+    progress: dict[str, dict] = {c: {"done": 0, "errors": 0, "entries": 0, "last_run": r} for c, r in last_run.items()}
     for record_id, item in latest.items():
+        stats = progress[county_of[record_id]]
+        stats["done"] += 1
+        stats["errors"] += bool(item.get("error"))
         for file in item.get("files", []):
             for entry in file["entries"]:
                 t = tokens(entry.get("name", ""))
                 if t:
                     rows.append(json.dumps(compact(record_id, entry), ensure_ascii=False, separators=(",", ":")))
                     toks.append(t)
-    return rows, toks, len(latest)
+                    stats["entries"] += 1
+    return rows, toks, progress
 
 
 def build(rows: list[str], toks: list[set[str]], max_bytes: int) -> dict[str, list[int]]:
@@ -118,7 +129,8 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=ROOT / "site" / "data" / "names")
     parser.add_argument("--max-kb", type=int, default=3000, help="split shards above this raw size")
     args = parser.parse_args()
-    rows, toks, records = load_rows(args.store)
+    rows, toks, progress = load_rows(args.store)
+    records = sum(p["done"] for p in progress.values())
     shards = build(rows, toks, args.max_kb * 1000)
     if args.out.exists():
         shutil.rmtree(args.out)
@@ -135,6 +147,7 @@ def main() -> None:
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "records": records,
         "entries": len(rows),
+        "progress": progress,
         "min_token": MIN_TOKEN,
         "columns": ["record_id", "name", "place", "event", "date", "act", "page", "image"],
         "shards": manifest,
