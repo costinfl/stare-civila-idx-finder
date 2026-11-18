@@ -17,6 +17,22 @@ python crawl.py --export     # rebuild site/data from idx_store/ only
 
 `idx_store/` (git-ignored) holds the per-county listings so an interrupted crawl resumes. The **Refresh catalogue** workflow re-runs the crawl on demand and commits the new catalogue; **Deploy site to GitHub Pages** publishes `site/` on every change to `main`. One-time setup: *Settings → Pages → Build and deployment → Source: GitHub Actions*.
 
+### Name index
+
+The site's **Names** tab searches the entries inside the IDX PDFs (name, place, event, date, act, register page, image number). It is built in two steps:
+
+1. `names.py` opens each catalogue record's page, downloads its IDX PDF(s) and extracts the table with `idxparse.py`, which reads word positions from poppler's `pdftotext -tsv` (install `poppler-utils`, or poppler on Windows). Each run appends `<store>/<county>/<run>.jsonl` and resumes from what is already stored. At two or more requests per register, the ~47,600 registers take roughly three to four days of continuous, paced crawling.
+2. `names_export.py` turns the store into gzip shards keyed by name-token prefix (`site/data/names/`, git-ignored). A search downloads only the shard(s) for its rarest word.
+
+The **Crawl IDX names** workflow runs every 6 hours for about 5 hours, committing progress to the `names-data` branch after each 55-minute chunk; each Pages deploy rebuilds the shards from that branch, so the Names tab grows as the crawl advances.
+
+```powershell
+python names.py --only PH- --limit 20       # local sample into idx_store/names
+python names.py --stats                     # progress, no requests
+python names_export.py                      # build site/data/names for local preview
+python -m http.server -d site 8000          # preview at http://localhost:8000
+```
+
 Note: București's archive code in the Cotă field is `MB`, not `B`; the local tool now uses `MB-`.
 
 ## Local live-search tool

@@ -4,4 +4,4 @@ __pycache__/
 venv/
 *.zip
 /idx_store/
-.idea/
+.idea//site/data/names/

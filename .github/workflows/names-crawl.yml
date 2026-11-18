@@ -1,0 +1,55 @@
+name: Crawl IDX names
+
+# Fetches IDX PDFs politely (one request every 1.25 s, shared by every
+# request the crawler makes) and stores the extracted names on the
+# names-data branch. Each run works ~5 h in 55-minute chunks, committing
+# after each, and resumes where the previous run stopped. Once every
+# register is done the runs finish within a minute.
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      chunks:
+        description: "Number of 55-minute chunks to run"
+        default: "5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: names-crawl
+  cancel-in-progress: false
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: names-data
+          path: names-data
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pdftotext
+        run: sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
+      - name: Crawl in chunks
+        working-directory: .
+        run: |
+          git -C names-data config user.name "github-actions[bot]"
+          git -C names-data config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          for chunk in $(seq 1 "${{ inputs.chunks || 5 }}"); do
+            python names.py --store names-data/names --max-minutes 55 | tail -n 3
+            git -C names-data add names
+            if git -C names-data diff --cached --quiet; then
+              echo "Nothing new; every register is done or unreachable."
+              break
+            fi
+            summary=$(python names.py --store names-data/names --stats | tail -n 1)
+            git -C names-data commit -q -m "Crawl names: ${summary//  / }"
+            git -C names-data push -q origin HEAD:names-data
+          done
+          python names.py --store names-data/names --stats

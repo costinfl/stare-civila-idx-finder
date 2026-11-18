@@ -17,68 +17,85 @@ import csv
 import io
 import subprocess
 
-# Header label -> (first header word, field key)
-COLUMNS = [
-    ("Nume", "name"),
-    ("Localitate", "place"),
-    ("Tip", "event"),
-    ("Data", "date"),
-    ("An", "year"),
-    ("Nr", "act"),
-    ("Pag.", "page"),
-    ("Imagine", "image"),
+import re
+
+# Header words seen across counties, e.g. "Localitate (adresa)" or
+# "Localitatea(Adresa)", "Pag. registr" or "Pagina registru", "Imagine PDF" or
+# "ImaginePDF", and "An act" + "Nr act" or one merged "An act/Nr act" column.
+HEADER_PATTERNS = [
+    (re.compile(r"^Nume$"), "name"),
+    (re.compile(r"^Localitate"), "place"),
+    (re.compile(r"^Tip$"), "event"),
+    (re.compile(r"^Data$"), "date"),
+    (re.compile(r"^Pag(\.|ina)"), "page"),
+    (re.compile(r"^Imagine"), "image"),
 ]
+FOOTER = re.compile(r"^(Page|Pagina) \d+ (of|din) \d+$")
 WRAPPING = {"name", "image"}
 LINE_TOLERANCE = 3.0
-COLUMN_SLACK = 6.0
+COLUMN_SLACK = 18.0  # data can start left of its header (13-16 pt in Caraș-Severin)
 
 
 def words_by_page(pdf: bytes) -> list[list[tuple[float, float, str]]]:
     out = subprocess.run(["pdftotext", "-tsv", "-", "-"], input=pdf, capture_output=True, check=True).stdout
     pages: list[list[tuple[float, float, str]]] = []
+    widths: dict[tuple[int, float, float], float] = {}
     for row in csv.DictReader(io.StringIO(out.decode("utf-8", errors="replace")), delimiter="\t", quoting=csv.QUOTE_NONE):
         if row["level"] == "1":
             pages.append([])
         elif row["level"] == "5" and pages:
-            pages[-1].append((float(row["left"]), float(row["top"]), row["text"]))
+            word = (float(row["left"]), float(row["top"]), row["text"])
+            pages[-1].append(word)
+            widths[(len(pages), word[0], word[1])] = float(row["width"])
+    words_by_page.widths = widths  # used only to split merged header words
     return pages
 
 
-def header_columns(words: list[tuple[float, float, str]]) -> tuple[list[tuple[float, str]], float] | None:
+def header_columns(words: list[tuple[float, float, str]], page_no: int = 0) -> tuple[list[tuple[float, str]], float] | None:
     """Find the header row on a page and return [(x, key)] plus its top."""
     nume = [w for w in words if w[2] == "Nume"]
     if not nume:
         return None
     top = min(w[1] for w in nume)
     line = sorted((w for w in words if abs(w[1] - top) <= LINE_TOLERANCE), key=lambda w: w[0])
-    columns: list[tuple[float, str]] = []
-    used: set[str] = set()
-    texts = [w[2] for w in line]
-    for i, (x, _, text) in enumerate(line):
-        for label, key in COLUMNS:
-            if text != label or key in used:
-                continue
-            # "An act" / "Nr act": require the following word to avoid matching stray text.
-            if key in ("year", "act") and (i + 1 >= len(texts) or texts[i + 1] != "act"):
-                continue
-            columns.append((x, key))
-            used.add(key)
-    return (sorted(columns), top) if len(columns) >= 3 else None
+    columns: dict[str, float] = {}
+    for i, (x, y, text) in enumerate(line):
+        following = line[i + 1][2] if i + 1 < len(line) else ""
+        for pattern, key in HEADER_PATTERNS:
+            if pattern.search(text) and key not in columns:
+                columns[key] = x
+        if text == "An" and following.startswith("act"):
+            columns.setdefault("year", x)
+        elif text == "Nr" and following.startswith("act"):
+            columns.setdefault("act", x)
+        elif text.endswith("An") and len(text) > 2 and following.startswith("act"):
+            # Merged "evenimentAn": the act column starts at the "An".
+            width = getattr(words_by_page, "widths", {}).get((page_no, x, y))
+            if width:
+                columns.setdefault("act", x + width * (len(text) - 2) / len(text))
+    # A merged "An act/Nr act" column holds act identifiers such as N-1899-1.
+    if "year" in columns and "act" not in columns and any(w[2].startswith("act/") for w in line):
+        columns["act"] = columns.pop("year")
+    ordered = sorted((x, key) for key, x in columns.items())
+    return (ordered, top) if len(ordered) >= 3 else None
 
 
 def column_for(x: float, columns: list[tuple[float, str]]) -> str:
     key = columns[0][1]
+    previous = None
     for start, name in columns:
-        if x + COLUMN_SLACK >= start:
+        slack = COLUMN_SLACK if previous is None else min(COLUMN_SLACK, 0.4 * (start - previous))
+        if x + slack >= start:
             key = name
+        previous = start
     return key
 
 
 def parse_pdf(pdf: bytes) -> list[dict[str, str]]:
     entries: list[dict[str, str]] = []
     columns: list[tuple[float, str]] | None = None
-    for words in words_by_page(pdf):
-        found = header_columns(words)
+    for page_no, words in enumerate(words_by_page(pdf), start=1):
+        found = header_columns(words, page_no)
         header_top = -1.0
         if found:
             columns, header_top = found
@@ -93,6 +110,8 @@ def parse_pdf(pdf: bytes) -> list[dict[str, str]]:
                 lines.append([word])
         current: dict[str, list[str]] | None = None
         for line in lines:
+            if FOOTER.match(" ".join(w[2] for w in sorted(line))):
+                continue
             cells: dict[str, list[str]] = {}
             for x, _, text in sorted(line):
                 cells.setdefault(column_for(x, columns), []).append(text)

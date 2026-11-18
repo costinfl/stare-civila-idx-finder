@@ -3,10 +3,10 @@ name: Deploy site to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ["site/**", ".github/workflows/pages.yml"]
+    paths: ["site/**", "names_export.py", ".github/workflows/pages.yml"]
   # Commits pushed by the refresh workflow's token don't fire push events.
   workflow_run:
-    workflows: ["Refresh catalogue"]
+    workflows: ["Refresh catalogue", "Crawl IDX names"]
     types: [completed]
   workflow_dispatch:
 
@@ -27,6 +27,15 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: names-data
+          path: names-data
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build name-index shards
+        run: python names_export.py --store names-data/names --out site/data/names
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

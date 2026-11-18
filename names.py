@@ -1,12 +1,14 @@
 """Polite, resumable crawler for the names inside IDX PDFs.
 
-For each catalogue record (from crawl.py's idx_store/listings/) it opens the
+For each catalogue record (from site/data/catalogue.json) it opens the
 record page to find its IDX PDF(s), downloads them, and extracts the table
 rows with idxparse. Two or more requests per record, all through the shared
 1.25 s pace in server.archive_get, so the full national run takes days: run it
 in chunks with --max-minutes; it resumes where it stopped.
 
-Results are appended to idx_store/names/<CC>.jsonl, one line per record:
+Each run appends to its own file, <store>/<CC>/<run-stamp>.jsonl (default
+store idx_store/names; the Actions crawl uses a checkout of the names-data
+branch), one line per record:
     {"id": 13913618, "files": [{"filename": ..., "pdf_url": ..., "entries": [...]}]}
 A record whose page or PDF failed is written with "error" and retried on the
 next run with --retry-errors.
@@ -14,6 +16,7 @@ next run with --retry-errors.
     python names.py --max-minutes 60          # work through all counties
     python names.py --only PH- --limit 20     # sample one county
     python names.py --stats                   # progress summary, no requests
+    python names.py --store names-data/names --max-minutes 300
 """
 
 from __future__ import annotations
@@ -27,26 +30,39 @@ import idxparse
 import server
 
 ROOT = Path(__file__).resolve().parent
-LISTINGS = ROOT / "idx_store" / "listings"
+CATALOGUE = ROOT / "site" / "data" / "catalogue.json"
 NAMES = ROOT / "idx_store" / "names"
+RUN_STAMP = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
 
 
 def code(prefix: str) -> str:
     return prefix.rstrip("-")
 
 
-def load_done(path: Path, retry_errors: bool) -> set[int]:
-    done: set[int] = set()
-    if path.exists():
+def county_items(folder: Path):
+    """Yield every stored line for a county, oldest run first."""
+    for path in sorted(folder.glob("*.jsonl")):
         for line in path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
-            item = json.loads(line)
-            if retry_errors and item.get("error"):
-                done.discard(item["id"])
-            else:
-                done.add(item["id"])
-    return done
+            if line.strip():
+                try:
+                    yield json.loads(line)
+                except json.JSONDecodeError:
+                    continue  # a run killed mid-write leaves a partial last line
+
+
+def load_done(folder: Path, retry_errors: bool) -> set[int]:
+    status: dict[int, bool] = {}
+    for item in county_items(folder):
+        status[item["id"]] = status.get(item["id"], False) or not item.get("error")
+    return {rid for rid, ok in status.items() if ok or not retry_errors}
+
+
+def catalogue_by_county() -> dict[str, list[dict]]:
+    data = json.loads(CATALOGUE.read_text(encoding="utf-8"))
+    out: dict[str, list[dict]] = {c["prefix"]: [] for c in data["counties"]}
+    for county, record_id, call_number, *_ in data["rows"]:
+        out[data["counties"][county]["prefix"]].append({"record_id": str(record_id), "call_number": call_number})
+    return out
 
 
 def process(record: dict) -> dict:
@@ -62,21 +78,18 @@ def process(record: dict) -> dict:
     return {"id": record_id, "files": files}
 
 
-def stats() -> None:
+def stats(store: Path) -> None:
     total_records = total_done = total_entries = 0
+    catalogue = catalogue_by_county()
     for county in server.COUNTIES:
-        listing = LISTINGS / f"{code(county['prefix'])}.json"
-        if not listing.exists():
-            continue
-        records = len(json.loads(listing.read_text(encoding="utf-8"))["records"])
-        path = NAMES / f"{code(county['prefix'])}.jsonl"
-        done = entries = errors = 0
-        if path.exists():
-            for line in path.read_text(encoding="utf-8").splitlines():
-                item = json.loads(line)
-                done += 1
-                errors += bool(item.get("error"))
-                entries += sum(len(f["entries"]) for f in item.get("files", []))
+        records = len(catalogue.get(county["prefix"], []))
+        latest: dict[int, dict] = {}
+        for item in county_items(store / code(county["prefix"])):
+            if item["id"] not in latest or not item.get("error"):
+                latest[item["id"]] = item
+        done = len(latest)
+        errors = sum(bool(i.get("error")) for i in latest.values())
+        entries = sum(len(f["entries"]) for i in latest.values() for f in i.get("files", []))
         total_records += records; total_done += done; total_entries += entries
         if done:
             print(f"{county['name']:<16} {done:>6}/{records:<6} records  {entries:>8} entries  {errors} errors")
@@ -91,22 +104,20 @@ def main() -> None:
     parser.add_argument("--max-minutes", type=float, help="stop starting new records after this long")
     parser.add_argument("--retry-errors", action="store_true")
     parser.add_argument("--stats", action="store_true")
+    parser.add_argument("--store", type=Path, default=NAMES, help="folder holding <CC>/<run>.jsonl files")
     args = parser.parse_args()
     if args.stats:
-        stats()
+        stats(args.store)
         return
-    NAMES.mkdir(parents=True, exist_ok=True)
+    catalogue = catalogue_by_county()
     wanted = {p.upper() if p.endswith("-") else p.upper() + "-" for p in args.only or []}
     deadline = time.monotonic() + args.max_minutes * 60 if args.max_minutes else None
     for county in server.COUNTIES:
         if wanted and county["prefix"] not in wanted:
             continue
-        listing = LISTINGS / f"{code(county['prefix'])}.json"
-        if not listing.exists():
-            continue
-        records = json.loads(listing.read_text(encoding="utf-8"))["records"]
-        out = NAMES / f"{code(county['prefix'])}.jsonl"
-        done = load_done(out, args.retry_errors)
+        records = catalogue.get(county["prefix"], [])
+        folder = args.store / code(county["prefix"])
+        done = load_done(folder, args.retry_errors)
         todo = [r for r in records if int(r["record_id"]) not in done]
         if args.limit:
             if args.sample and len(todo) > args.limit:
@@ -117,7 +128,8 @@ def main() -> None:
         if not todo:
             continue
         print(f"{county['name']}: {len(todo)} records to fetch ({len(done)} already done)", flush=True)
-        with out.open("a", encoding="utf-8") as sink:
+        folder.mkdir(parents=True, exist_ok=True)
+        with (folder / f"{RUN_STAMP}.jsonl").open("a", encoding="utf-8") as sink:
             for record in todo:
                 if deadline and time.monotonic() > deadline:
                     print("Time budget reached; run again to resume.")
