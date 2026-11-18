@@ -31,7 +31,7 @@ HEADER_PATTERNS = [
     (re.compile(r"^Imagine"), "image"),
 ]
 FOOTER = re.compile(r"^(Page|Pagina) \d+ (of|din) \d+$")
-WRAPPING = {"name", "image"}
+WRAPPING = {"name", "place", "image"}  # columns whose text can wrap onto extra lines
 LINE_TOLERANCE = 3.0
 COLUMN_SLACK = 18.0  # data can start left of its header (13-16 pt in Caraș-Severin)
 
