@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stare Civilă IDX Finder</title>
+  <meta name="description" content="Searchable catalogue of Romanian National Archives civil-status registers that have an attached IDX name index.">
+  <style>
+    :root { color-scheme: light; --ink:#182431; --muted:#5d6d7c; --line:#dce3e8; --blue:#165d87; --blue-dark:#104665; --paper:#fff; --wash:#f3f6f8; --mark:#fff1b8; --focus:#165d8733; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --ink:#e3e9ee; --muted:#9aabb9; --line:#2c3a46; --blue:#7cc0ea; --blue-dark:#a5d4f2; --paper:#17212a; --wash:#0f171e; --mark:#5b4a12; --focus:#7cc0ea40; } }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--wash); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { max-width:1180px; margin:0 auto; padding:28px 22px 56px; }
+    h1 { margin:0 0 6px; font-size:clamp(25px,4vw,34px); line-height:1.15; letter-spacing:-.03em; }
+    header p { margin:4px 0 0; color:var(--muted); max-width:820px; }
+    .panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:18px; margin:18px 0; }
+    .filters { display:grid; grid-template-columns:2fr 1fr .6fr .6fr; gap:12px; align-items:end; }
+    label { display:block; font-weight:650; font-size:13px; margin:0 0 5px; }
+    input, select { width:100%; border:1px solid var(--line); background:var(--paper); color:var(--ink); border-radius:7px; padding:9px 10px; font:inherit; }
+    input:focus, select:focus { outline:3px solid var(--focus); border-color:var(--blue); }
+    .meta { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:center; margin-top:12px; color:var(--muted); font-size:13px; }
+    button { border:0; border-radius:7px; padding:8px 13px; background:var(--blue); color:var(--paper); font:inherit; font-size:13px; font-weight:650; cursor:pointer; }
+    button:hover { background:var(--blue-dark); }
+    button:disabled { opacity:.5; cursor:default; }
+    .table-wrap { overflow-x:auto; }
+    table { border-collapse:collapse; width:100%; font-size:13.5px; }
+    th, td { text-align:left; vertical-align:top; padding:9px 8px; border-bottom:1px solid var(--line); }
+    th { font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+    td.call { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.5px; white-space:nowrap; }
+    td.years { white-space:nowrap; }
+    a { color:var(--blue); }
+    mark { background:var(--mark); color:inherit; border-radius:2px; }
+    .empty { color:var(--muted); padding:18px 4px; }
+    .more { text-align:center; margin-top:14px; }
+    footer { color:var(--muted); font-size:12.5px; margin-top:24px; }
+    @media (max-width:760px) {
+      main { padding:18px 16px 40px; }
+      .filters { grid-template-columns:1fr 1fr; }
+      .filters .wide { grid-column:1 / -1; }
+      thead { display:none; }
+      table, tbody, tr, td { display:block; width:100%; }
+      tr { border-bottom:1px solid var(--line); padding:8px 0; }
+      td { border:0; padding:2px 0; }
+      td.call { white-space:normal; word-break:break-all; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Stare Civilă IDX Finder</h1>
+    <p>Every unit in <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a> that has an attached <strong>IDX</strong> name index (Nume, Localitate, Tip eveniment, Data, Nr act, Imagine). Search runs entirely in your browser. Open a record to view its scans and its IDX PDF on the Archives site.</p>
+  </header>
+
+  <section class="panel" aria-label="Search">
+    <div class="filters">
+      <div class="wide"><label for="q">Search title or call number</label><input id="q" type="search" placeholder="e.g. născuți Ploiești, PH-F-00006-209, decedați 1913" autocomplete="off"></div>
+      <div class="wide"><label for="county">County</label><select id="county"><option value="">All counties</option></select></div>
+      <div><label for="from">From year</label><input id="from" type="number" inputmode="numeric" min="1500" max="2100" placeholder="1800"></div>
+      <div><label for="to">To year</label><input id="to" type="number" inputmode="numeric" min="1500" max="2100" placeholder="1950"></div>
+    </div>
+    <div class="meta"><span id="count" role="status" aria-live="polite">Loading catalogue…</span><button id="csv" disabled>Download results as CSV</button></div>
+  </section>
+
+  <section class="panel">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>County</th><th>Call number</th><th>Title</th><th>Years</th><th>Level</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="more"><button id="more" hidden>Show more</button></div>
+  </section>
+
+  <footer id="footer"></footer>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const PAGE = 200;
+let data, matches = [], shown = 0;
+
+const fold = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[şș]/gi, "s").replace(/[ţț]/gi, "t").toLowerCase();
+
+function yearsOf(text) {
+  const ys = (String(text).match(/\b(1[4-9]\d\d|20\d\d)\b/g) || []).map(Number);
+  return ys.length ? [Math.min(...ys), Math.max(...ys)] : [null, null];
+}
+
+async function load() {
+  try {
+    const response = await fetch("data/catalogue.json");
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    data = await response.json();
+  } catch (error) {
+    $("count").textContent = `Could not load the catalogue (${error.message}).`;
+    return;
+  }
+  data.items = data.rows.map(([c, id, call, title, years, level]) => {
+    const [y0, y1] = yearsOf(years);
+    return { c, id, call, title, years, level: data.levels[level], y0, y1, hay: fold(`${call} ${title} ${years}`) };
+  });
+  const select = $("county");
+  data.counties.forEach((county, i) => {
+    const option = document.createElement("option");
+    option.value = i; option.textContent = `${county.name} (${county.count.toLocaleString("ro-RO")})`;
+    select.append(option);
+  });
+  $("footer").textContent = `${data.rows.length.toLocaleString("ro-RO")} records from ${data.counties.length} counties · catalogue built ${data.generated_at.slice(0, 10)} from the public listing search of the Archives. Not affiliated with the National Archives of Romania.`;
+  readHash();
+  run();
+}
+
+function readHash() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  $("q").value = p.get("q") || ""; $("county").value = p.get("county") || ""; $("from").value = p.get("from") || ""; $("to").value = p.get("to") || "";
+}
+function writeHash() {
+  const p = new URLSearchParams();
+  for (const k of ["q", "county", "from", "to"]) if ($(k).value) p.set(k, $(k).value);
+  history.replaceState(null, "", p.toString() ? `#${p}` : location.pathname);
+}
+
+function run() {
+  if (!data) return;
+  const words = fold($("q").value).split(/\s+/).filter(Boolean);
+  const county = $("county").value === "" ? null : Number($("county").value);
+  const from = Number($("from").value) || null, to = Number($("to").value) || null;
+  matches = data.items.filter(item =>
+    (county === null || item.c === county) &&
+    (from === null || item.y1 === null || item.y1 >= from) &&
+    (to === null || item.y0 === null || item.y0 <= to) &&
+    words.every(w => item.hay.includes(w)));
+  shown = 0; $("rows").replaceChildren(); more();
+  $("count").textContent = `${matches.length.toLocaleString("ro-RO")} of ${data.items.length.toLocaleString("ro-RO")} records`;
+  $("csv").disabled = !matches.length;
+  writeHash();
+}
+
+function highlight(cell, text, words) {
+  if (!words.length) { cell.textContent = text; return; }
+  const folded = fold(text);
+  const marks = new Array(text.length).fill(false);
+  for (const w of words) { let i = folded.indexOf(w); while (i !== -1) { for (let k = i; k < i + w.length; k++) marks[k] = true; i = folded.indexOf(w, i + 1); } }
+  // fold() keeps length for Romanian text, so positions line up with the original.
+  if (folded.length !== text.length) { cell.textContent = text; return; }
+  let i = 0;
+  while (i < text.length) {
+    let j = i; while (j < text.length && marks[j] === marks[i]) j++;
+    const part = text.slice(i, j);
+    if (marks[i]) { const m = document.createElement("mark"); m.textContent = part; cell.append(m); } else cell.append(part);
+    i = j;
+  }
+}
+
+function more() {
+  const words = fold($("q").value).split(/\s+/).filter(Boolean);
+  const body = $("rows");
+  if (!matches.length) { const r = body.insertRow(); const c = r.insertCell(); c.colSpan = 5; c.className = "empty"; c.textContent = "No records match. Try fewer words or a wider year range."; }
+  for (const item of matches.slice(shown, shown + PAGE)) {
+    const r = body.insertRow();
+    r.insertCell().textContent = data.counties[item.c].name;
+    const call = r.insertCell(); call.className = "call"; highlight(call, item.call, words);
+    const title = r.insertCell(); const a = document.createElement("a");
+    a.href = `${data.source}/cota/?cid=${item.id}`; a.target = "_blank"; a.rel = "noopener"; highlight(a, item.title || "(fără titlu)", words); title.append(a);
+    const years = r.insertCell(); years.className = "years"; years.textContent = item.years;
+    r.insertCell().textContent = item.level;
+  }
+  shown = Math.min(shown + PAGE, matches.length);
+  $("more").hidden = shown >= matches.length;
+  $("more").textContent = `Show more (${(matches.length - shown).toLocaleString("ro-RO")} left)`;
+}
+
+function csvCell(v) { return `"${String(v ?? "").replaceAll('"', '""')}"`; }
+$("csv").onclick = () => {
+  const lines = [["county", "call_number", "title", "years", "level", "record_url"], ...matches.map(i => [data.counties[i.c].name, i.call, i.title, i.years, i.level, `${data.source}/cota/?cid=${i.id}`])];
+  const blob = new Blob(["﻿" + lines.map(r => r.map(csvCell).join(",")).join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "stare-civila-idx.csv"; link.click(); URL.revokeObjectURL(link.href);
+};
+
+let timer;
+for (const id of ["q", "county", "from", "to"]) $(id).addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(run, 120); });
+$("more").onclick = more;
+window.addEventListener("hashchange", () => { readHash(); run(); });
+load();
+</script>
+</body>
+</html>
