@@ -4,21 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Stare Civilă IDX Finder</title>
-  <meta name="description" content="Searchable catalogue of Romanian National Archives civil-status registers that have an attached IDX name index.">
+  <meta name="description" content="Search names in the IDX indexes of Romanian civil-status registers held by the National Archives, and the catalogue of indexed registers.">
   <style>
-    :root { color-scheme: light; --ink:#182431; --muted:#5d6d7c; --line:#dce3e8; --blue:#165d87; --blue-dark:#104665; --paper:#fff; --wash:#f3f6f8; --mark:#fff1b8; --focus:#165d8733; }
-    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --ink:#e3e9ee; --muted:#9aabb9; --line:#2c3a46; --blue:#7cc0ea; --blue-dark:#a5d4f2; --paper:#17212a; --wash:#0f171e; --mark:#5b4a12; --focus:#7cc0ea40; } }
+    :root { color-scheme: light; --ink:#182431; --muted:#5d6d7c; --line:#dce3e8; --blue:#165d87; --blue-dark:#104665; --paper:#fff; --wash:#f3f6f8; --mark:#fff1b8; --focus:#165d8733; --tab:#e8eef2; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --ink:#e3e9ee; --muted:#9aabb9; --line:#2c3a46; --blue:#7cc0ea; --blue-dark:#a5d4f2; --paper:#17212a; --wash:#0f171e; --mark:#5b4a12; --focus:#7cc0ea40; --tab:#22303b; } }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--wash); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
     main { max-width:1180px; margin:0 auto; padding:28px 22px 56px; }
     h1 { margin:0 0 6px; font-size:clamp(25px,4vw,34px); line-height:1.15; letter-spacing:-.03em; }
     header p { margin:4px 0 0; color:var(--muted); max-width:820px; }
-    .panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:18px; margin:18px 0; }
+    .tabs { display:flex; gap:6px; margin-top:18px; }
+    .tabs button { background:var(--tab); color:var(--ink); border-radius:8px 8px 0 0; padding:9px 16px; font-size:14px; }
+    .tabs button[aria-selected="true"] { background:var(--paper); color:var(--blue); box-shadow:inset 0 -2px 0 var(--blue); }
+    .tabs button:hover { background:var(--paper); }
+    .panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:18px; margin:0 0 18px; }
+    .tabs + .panel { border-top-left-radius:0; }
     .filters { display:grid; grid-template-columns:2fr 1fr .6fr .6fr; gap:12px; align-items:end; }
+    .filters.names { grid-template-columns:2fr 1.2fr 1fr .6fr .6fr; }
     label { display:block; font-weight:650; font-size:13px; margin:0 0 5px; }
     input, select { width:100%; border:1px solid var(--line); background:var(--paper); color:var(--ink); border-radius:7px; padding:9px 10px; font:inherit; }
     input:focus, select:focus { outline:3px solid var(--focus); border-color:var(--blue); }
     .meta { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:center; margin-top:12px; color:var(--muted); font-size:13px; }
+    .hint { color:var(--muted); font-size:12.5px; margin-top:8px; }
     button { border:0; border-radius:7px; padding:8px 13px; background:var(--blue); color:var(--paper); font:inherit; font-size:13px; font-weight:650; cursor:pointer; }
     button:hover { background:var(--blue-dark); }
     button:disabled { opacity:.5; cursor:default; }
@@ -27,15 +34,27 @@
     th, td { text-align:left; vertical-align:top; padding:9px 8px; border-bottom:1px solid var(--line); }
     th { font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
     td.call { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.5px; white-space:nowrap; }
-    td.years { white-space:nowrap; }
+    td.nowrap { white-space:nowrap; }
+    td.name { font-weight:600; }
+    .sub { color:var(--muted); font-size:12px; }
     a { color:var(--blue); }
     mark { background:var(--mark); color:inherit; border-radius:2px; }
     .empty { color:var(--muted); padding:18px 4px; }
     .more { text-align:center; margin-top:14px; }
     footer { color:var(--muted); font-size:12.5px; margin-top:24px; }
+    details.progress { margin-top:12px; border-top:1px solid var(--line); padding-top:10px; font-size:13px; }
+    details.progress summary { cursor:pointer; color:var(--muted); }
+    details.progress summary strong { color:var(--ink); }
+    .bar { height:8px; background:var(--tab); border-radius:4px; overflow:hidden; margin:6px 0 2px; }
+    .bar > span { display:block; height:100%; background:var(--blue); }
+    .bar.small { height:6px; min-width:80px; margin:6px 0 0; }
+    table.counties { margin-top:10px; font-size:12.5px; }
+    table.counties td, table.counties th { padding:5px 8px; }
+    table.counties td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    [hidden] { display:none !important; }
     @media (max-width:760px) {
       main { padding:18px 16px 40px; }
-      .filters { grid-template-columns:1fr 1fr; }
+      .filters, .filters.names { grid-template-columns:1fr 1fr; }
       .filters .wide { grid-column:1 / -1; }
       thead { display:none; }
       table, tbody, tr, td { display:block; width:100%; }
@@ -49,100 +68,100 @@
 <main>
   <header>
     <h1>Stare Civilă IDX Finder</h1>
-    <p>Every unit in <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a> that has an attached <strong>IDX</strong> name index (Nume, Localitate, Tip eveniment, Data, Nr act, Imagine). Search runs entirely in your browser. Open a record to view its scans and its IDX PDF on the Archives site.</p>
+    <p>Search the <strong>IDX</strong> name indexes attached to civil-status registers in <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a>. Everything runs in your browser from a prebuilt index. Open a register to view its scans on the Archives site.</p>
   </header>
 
-  <section class="panel" aria-label="Search">
-    <div class="filters">
-      <div class="wide"><label for="q">Search title or call number</label><input id="q" type="search" placeholder="e.g. născuți Ploiești, PH-F-00006-209, decedați 1913" autocomplete="off"></div>
-      <div class="wide"><label for="county">County</label><select id="county"><option value="">All counties</option></select></div>
-      <div><label for="from">From year</label><input id="from" type="number" inputmode="numeric" min="1500" max="2100" placeholder="1800"></div>
-      <div><label for="to">To year</label><input id="to" type="number" inputmode="numeric" min="1500" max="2100" placeholder="1950"></div>
-    </div>
-    <div class="meta"><span id="count" role="status" aria-live="polite">Loading catalogue…</span><button id="csv" disabled>Download results as CSV</button></div>
-  </section>
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-names" aria-controls="view-names" aria-selected="true">Names</button>
+    <button role="tab" id="tab-registers" aria-controls="view-registers" aria-selected="false">Registers</button>
+  </nav>
 
-  <section class="panel">
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>County</th><th>Call number</th><th>Title</th><th>Years</th><th>Level</th></tr></thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
-    <div class="more"><button id="more" hidden>Show more</button></div>
-  </section>
+  <div id="view-names" role="tabpanel" aria-labelledby="tab-names">
+    <section class="panel" aria-label="Name search">
+      <div class="filters names">
+        <div class="wide"><label for="n-q">Name</label><input id="n-q" type="search" placeholder="e.g. Popescu Ion, Schöfer, Kovács" autocomplete="off"></div>
+        <div class="wide"><label for="n-place">Place contains</label><input id="n-place" type="search" placeholder="e.g. Ploiești" autocomplete="off"></div>
+        <div class="wide"><label for="n-county">County</label><select id="n-county"><option value="">All counties</option></select></div>
+        <div><label for="n-from">From year</label><input id="n-from" type="number" inputmode="numeric" min="1500" max="2100" placeholder="1850"></div>
+        <div><label for="n-to">To year</label><input id="n-to" type="number" inputmode="numeric" min="1500" max="2100" placeholder="1920"></div>
+      </div>
+      <div class="meta"><span id="n-count" role="status" aria-live="polite">Loading name index…</span><button id="n-csv" disabled>Download results as CSV</button></div>
+      <div class="hint">Each word matches the start of a name part, ignoring diacritics: “pop ion” finds “Popescu Ion” and “Ioana Popa”. Use at least 3 letters per word; the rarest word decides how much is downloaded.</div>
+      <details class="progress" id="progress" hidden>
+        <summary id="progress-summary"></summary>
+        <div class="bar" aria-hidden="true"><span id="progress-bar"></span></div>
+        <div class="table-wrap">
+          <table class="counties">
+            <thead><tr><th>County</th><th>Registers indexed</th><th></th><th>Names</th><th>Last crawled</th></tr></thead>
+            <tbody id="progress-rows"></tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+    <section class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Event</th><th>Date</th><th>Place</th><th>Act · page</th><th>Register</th></tr></thead>
+          <tbody id="n-rows"></tbody>
+        </table>
+      </div>
+      <div class="more"><button id="n-more" hidden>Show more</button></div>
+    </section>
+  </div>
+
+  <div id="view-registers" role="tabpanel" aria-labelledby="tab-registers" hidden>
+    <section class="panel" aria-label="Register search">
+      <div class="filters">
+        <div class="wide"><label for="q">Search title or call number</label><input id="q" type="search" placeholder="e.g. născuți Ploiești, PH-F-00006-209, decedați 1913" autocomplete="off"></div>
+        <div class="wide"><label for="county">County</label><select id="county"><option value="">All counties</option></select></div>
+        <div><label for="from">From year</label><input id="from" type="number" inputmode="numeric" min="1500" max="2100" placeholder="1800"></div>
+        <div><label for="to">To year</label><input id="to" type="number" inputmode="numeric" min="1500" max="2100" placeholder="1950"></div>
+      </div>
+      <div class="meta"><span id="count" role="status" aria-live="polite">Loading catalogue…</span><button id="csv" disabled>Download results as CSV</button></div>
+    </section>
+    <section class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>County</th><th>Call number</th><th>Title</th><th>Years</th><th>Level</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="more"><button id="more" hidden>Show more</button></div>
+    </section>
+  </div>
 
   <footer id="footer"></footer>
 </main>
 <script>
 const $ = (id) => document.getElementById(id);
 const PAGE = 200;
-let data, matches = [], shown = 0;
+const MAX_DOWNLOAD = 30e6;
+let data, byId = new Map(), names = null;
 
-const fold = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[şș]/gi, "s").replace(/[ţț]/gi, "t").toLowerCase();
-
+const fold = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const words = (s) => fold(s).match(/[a-z0-9-]+/g) || [];
+const fmt = (n) => n.toLocaleString("ro-RO");
 function yearsOf(text) {
   const ys = (String(text).match(/\b(1[4-9]\d\d|20\d\d)\b/g) || []).map(Number);
   return ys.length ? [Math.min(...ys), Math.max(...ys)] : [null, null];
 }
-
-async function load() {
-  try {
-    const response = await fetch("data/catalogue.json");
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    data = await response.json();
-  } catch (error) {
-    $("count").textContent = `Could not load the catalogue (${error.message}).`;
-    return;
-  }
-  data.items = data.rows.map(([c, id, call, title, years, level]) => {
-    const [y0, y1] = yearsOf(years);
-    return { c, id, call, title, years, level: data.levels[level], y0, y1, hay: fold(`${call} ${title} ${years}`) };
-  });
-  const select = $("county");
-  data.counties.forEach((county, i) => {
-    const option = document.createElement("option");
-    option.value = i; option.textContent = `${county.name} (${county.count.toLocaleString("ro-RO")})`;
-    select.append(option);
-  });
-  $("footer").textContent = `${data.rows.length.toLocaleString("ro-RO")} records from ${data.counties.length} counties · catalogue built ${data.generated_at.slice(0, 10)} from the public listing search of the Archives. Not affiliated with the National Archives of Romania.`;
-  readHash();
-  run();
+function link(href, text) { const a = document.createElement("a"); a.href = href; a.target = "_blank"; a.rel = "noopener"; a.textContent = text; return a; }
+function csv(filename, lines) {
+  const cell = (v) => `"${String(v ?? "").replaceAll('"', '""')}"`;
+  const blob = new Blob(["﻿" + lines.map(r => r.map(cell).join(",")).join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
 }
-
-function readHash() {
-  const p = new URLSearchParams(location.hash.slice(1));
-  $("q").value = p.get("q") || ""; $("county").value = p.get("county") || ""; $("from").value = p.get("from") || ""; $("to").value = p.get("to") || "";
-}
-function writeHash() {
-  const p = new URLSearchParams();
-  for (const k of ["q", "county", "from", "to"]) if ($(k).value) p.set(k, $(k).value);
-  history.replaceState(null, "", p.toString() ? `#${p}` : location.pathname);
-}
-
-function run() {
-  if (!data) return;
-  const words = fold($("q").value).split(/\s+/).filter(Boolean);
-  const county = $("county").value === "" ? null : Number($("county").value);
-  const from = Number($("from").value) || null, to = Number($("to").value) || null;
-  matches = data.items.filter(item =>
-    (county === null || item.c === county) &&
-    (from === null || item.y1 === null || item.y1 >= from) &&
-    (to === null || item.y0 === null || item.y0 <= to) &&
-    words.every(w => item.hay.includes(w)));
-  shown = 0; $("rows").replaceChildren(); more();
-  $("count").textContent = `${matches.length.toLocaleString("ro-RO")} of ${data.items.length.toLocaleString("ro-RO")} records`;
-  $("csv").disabled = !matches.length;
-  writeHash();
-}
-
-function highlight(cell, text, words) {
-  if (!words.length) { cell.textContent = text; return; }
+function highlight(cell, text, terms, prefixOnly) {
   const folded = fold(text);
+  if (!terms.length || folded.length !== text.length) { cell.textContent = text; return; }
   const marks = new Array(text.length).fill(false);
-  for (const w of words) { let i = folded.indexOf(w); while (i !== -1) { for (let k = i; k < i + w.length; k++) marks[k] = true; i = folded.indexOf(w, i + 1); } }
-  // fold() keeps length for Romanian text, so positions line up with the original.
-  if (folded.length !== text.length) { cell.textContent = text; return; }
+  for (const w of terms) {
+    let i = folded.indexOf(w);
+    while (i !== -1) {
+      if (!prefixOnly || i === 0 || !/[a-z]/.test(folded[i - 1])) for (let k = i; k < i + w.length; k++) marks[k] = true;
+      i = folded.indexOf(w, i + 1);
+    }
+  }
   let i = 0;
   while (i < text.length) {
     let j = i; while (j < text.length && marks[j] === marks[i]) j++;
@@ -152,36 +171,224 @@ function highlight(cell, text, words) {
   }
 }
 
-function more() {
-  const words = fold($("q").value).split(/\s+/).filter(Boolean);
+/* ---------- tabs and URL state ---------- */
+const FIELDS = { names: ["n-q", "n-place", "n-county", "n-from", "n-to"], registers: ["q", "county", "from", "to"] };
+let tab = "names";
+function showTab(name, push = true) {
+  tab = name;
+  for (const t of ["names", "registers"]) { $(`tab-${t}`).setAttribute("aria-selected", t === name); $(`view-${t}`).hidden = t !== name; }
+  if (push) writeHash();
+}
+function readHash() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  showTab(p.get("tab") === "registers" ? "registers" : "names", false);
+  for (const id of [...FIELDS.names, ...FIELDS.registers]) $(id).value = p.get(id) || "";
+}
+function writeHash() {
+  const p = new URLSearchParams({ tab });
+  for (const id of FIELDS[tab]) if ($(id).value) p.set(id, $(id).value);
+  history.replaceState(null, "", `#${p}`);
+}
+$("tab-names").onclick = () => showTab("names");
+$("tab-registers").onclick = () => { showTab("registers"); runRegisters(); };
+
+/* ---------- catalogue (registers) ---------- */
+let regMatches = [], regShown = 0;
+async function loadCatalogue() {
+  const response = await fetch("data/catalogue.json");
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  data = await response.json();
+  data.items = data.rows.map(([c, id, call, title, years, level]) => {
+    const [y0, y1] = yearsOf(years);
+    const item = { c, id, call, title, years, level: data.levels[level], y0, y1, hay: fold(`${call} ${title} ${years}`) };
+    byId.set(id, item);
+    return item;
+  });
+  for (const select of [$("county"), $("n-county")]) data.counties.forEach((county, i) => {
+    const option = document.createElement("option"); option.value = i; option.textContent = `${county.name} (${fmt(county.count)})`; select.append(option);
+  });
+}
+function runRegisters() {
+  if (!data) return;
+  const terms = fold($("q").value).split(/\s+/).filter(Boolean);
+  const county = $("county").value === "" ? null : Number($("county").value);
+  const from = Number($("from").value) || null, to = Number($("to").value) || null;
+  regMatches = data.items.filter(item =>
+    (county === null || item.c === county) &&
+    (from === null || item.y1 === null || item.y1 >= from) &&
+    (to === null || item.y0 === null || item.y0 <= to) &&
+    terms.every(w => item.hay.includes(w)));
+  regShown = 0; $("rows").replaceChildren(); moreRegisters();
+  $("count").textContent = `${fmt(regMatches.length)} of ${fmt(data.items.length)} indexed registers`;
+  $("csv").disabled = !regMatches.length;
+  writeHash();
+}
+function moreRegisters() {
+  const terms = fold($("q").value).split(/\s+/).filter(Boolean);
   const body = $("rows");
-  if (!matches.length) { const r = body.insertRow(); const c = r.insertCell(); c.colSpan = 5; c.className = "empty"; c.textContent = "No records match. Try fewer words or a wider year range."; }
-  for (const item of matches.slice(shown, shown + PAGE)) {
+  if (!regMatches.length) { const c = body.insertRow().insertCell(); c.colSpan = 5; c.className = "empty"; c.textContent = "No registers match. Try fewer words or a wider year range."; }
+  for (const item of regMatches.slice(regShown, regShown + PAGE)) {
     const r = body.insertRow();
     r.insertCell().textContent = data.counties[item.c].name;
-    const call = r.insertCell(); call.className = "call"; highlight(call, item.call, words);
-    const title = r.insertCell(); const a = document.createElement("a");
-    a.href = `${data.source}/cota/?cid=${item.id}`; a.target = "_blank"; a.rel = "noopener"; highlight(a, item.title || "(fără titlu)", words); title.append(a);
-    const years = r.insertCell(); years.className = "years"; years.textContent = item.years;
+    const call = r.insertCell(); call.className = "call"; highlight(call, item.call, terms);
+    const a = link(`${data.source}/cota/?cid=${item.id}`, ""); highlight(a, item.title || "(fără titlu)", terms); r.insertCell().append(a);
+    const y = r.insertCell(); y.className = "nowrap"; y.textContent = item.years;
     r.insertCell().textContent = item.level;
   }
-  shown = Math.min(shown + PAGE, matches.length);
-  $("more").hidden = shown >= matches.length;
-  $("more").textContent = `Show more (${(matches.length - shown).toLocaleString("ro-RO")} left)`;
+  regShown = Math.min(regShown + PAGE, regMatches.length);
+  $("more").hidden = regShown >= regMatches.length;
+  $("more").textContent = `Show more (${fmt(regMatches.length - regShown)} left)`;
 }
+$("more").onclick = moreRegisters;
+$("csv").onclick = () => csv("stare-civila-registers.csv", [["county", "call_number", "title", "years", "level", "record_url"],
+  ...regMatches.map(i => [data.counties[i.c].name, i.call, i.title, i.years, i.level, `${data.source}/cota/?cid=${i.id}`])]);
 
-function csvCell(v) { return `"${String(v ?? "").replaceAll('"', '""')}"`; }
-$("csv").onclick = () => {
-  const lines = [["county", "call_number", "title", "years", "level", "record_url"], ...matches.map(i => [data.counties[i.c].name, i.call, i.title, i.years, i.level, `${data.source}/cota/?cid=${i.id}`])];
-  const blob = new Blob(["﻿" + lines.map(r => r.map(csvCell).join(",")).join("\r\n")], { type: "text/csv;charset=utf-8" });
-  const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "stare-civila-idx.csv"; link.click(); URL.revokeObjectURL(link.href);
-};
+/* ---------- name index ---------- */
+const shardCache = new Map();
+let nameMatches = [], nameShown = 0, nameRun = 0;
+async function loadNames() {
+  try {
+    const response = await fetch("data/names/index.json");
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    names = await response.json();
+    names.keys = Object.keys(names.shards);
+    renderProgress();
+    $("n-count").textContent = `${fmt(names.entries)} names indexed from ${fmt(names.records)} of ${fmt(data.items.length)} registers so far. Type a name to search.`;
+  } catch {
+    $("n-count").textContent = "The name index is not published yet. Use the Registers tab meanwhile.";
+  }
+}
+function runDate(stamp) {
+  const m = /^(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)/.exec(stamp || "");
+  return m ? `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]} UTC` : "";
+}
+function renderProgress() {
+  const progress = names.progress || {};
+  const total = data.items.length, pct = (n, d) => d ? (100 * n / d) : 0;
+  const latest = Object.values(progress).map(p => p.last_run).sort().pop();
+  $("progress-summary").innerHTML = "";
+  const strong = document.createElement("strong");
+  strong.textContent = `Index progress: ${fmt(names.records)} of ${fmt(total)} registers (${pct(names.records, total).toFixed(1)}%)`;
+  $("progress-summary").append(strong, ` · ${fmt(names.entries)} names · last crawl ${runDate(latest) || "—"}`);
+  $("progress-bar").style.width = `${pct(names.records, total)}%`;
+  const body = $("progress-rows"); body.replaceChildren();
+  data.counties.forEach((county) => {
+    const p = progress[county.prefix.replace(/-$/, "")] || { done: 0, entries: 0, errors: 0 };
+    const r = body.insertRow();
+    r.insertCell().textContent = county.name;
+    const done = r.insertCell(); done.className = "num";
+    done.textContent = `${fmt(p.done)} / ${fmt(county.count)}${p.errors ? ` (${fmt(p.errors)} failed)` : ""}`;
+    const barCell = r.insertCell(); const bar = document.createElement("div"); bar.className = "bar small";
+    const fill = document.createElement("span"); fill.style.width = `${pct(p.done, county.count)}%`; bar.append(fill); barCell.append(bar);
+    const n = r.insertCell(); n.className = "num"; n.textContent = fmt(p.entries);
+    r.insertCell().textContent = runDate(p.last_run);
+  });
+  $("progress").hidden = false;
+}
+function shardsFor(term) {
+  return names.keys.filter(k => {
+    const exact = k.endsWith("_"), p = exact ? k.slice(0, -1) : k;
+    return p.startsWith(term) || (!exact && term.startsWith(p));
+  });
+}
+async function fetchShard(key) {
+  if (!shardCache.has(key)) shardCache.set(key, (async () => {
+    const response = await fetch(`data/names/${key}.gz`);
+    if (!response.ok) throw new Error(`shard ${key}: HTTP ${response.status}`);
+    const stream = response.body.pipeThrough(new DecompressionStream("gzip"));
+    return JSON.parse(await new Response(stream).text());
+  })());
+  return shardCache.get(key);
+}
+async function runNames() {
+  writeHash();
+  if (!names || !data) return;
+  const run = ++nameRun;
+  const terms = [...new Set(words($("n-q").value))];
+  const usable = terms.filter(t => t.length >= names.min_token && /^[a-z]+$/.test(t));
+  $("n-rows").replaceChildren(); $("n-more").hidden = true; $("n-csv").disabled = true; nameMatches = [];
+  if (!usable.length) {
+    $("n-count").textContent = terms.length ? `Use at least ${names.min_token} letters in one of the words.` : `${fmt(names.entries)} names indexed from ${fmt(names.records)} of ${fmt(data.items.length)} registers so far. Type a name to search.`;
+    return;
+  }
+  // Download only the shards for the word with the smallest download.
+  let best = null;
+  for (const t of usable) {
+    const keys = shardsFor(t), bytes = keys.reduce((s, k) => s + names.shards[k][1], 0);
+    if (!best || bytes < best.bytes) best = { t, keys, bytes };
+  }
+  if (!best.keys.length) { $("n-count").textContent = "No names match."; return; }
+  if (best.bytes > MAX_DOWNLOAD) { $("n-count").textContent = `“${best.t}” is too common to search alone (${(best.bytes / 1e6).toFixed(0)} MB). Add a surname or more letters.`; return; }
+  $("n-count").textContent = `Searching… (${(best.bytes / 1e6).toFixed(1)} MB)`;
+  let shards;
+  try { shards = await Promise.all(best.keys.map(fetchShard)); }
+  catch (error) { if (run === nameRun) $("n-count").textContent = `Could not load the name index (${error.message}).`; return; }
+  if (run !== nameRun) return;
+  const county = $("n-county").value === "" ? null : Number($("n-county").value);
+  const place = fold($("n-place").value.trim());
+  const from = Number($("n-from").value) || null, to = Number($("n-to").value) || null;
+  const seen = new Set();
+  for (const shard of shards) for (const row of shard) {
+    const [id, name, rowPlace, , date] = row;
+    const key = `${id}|${name}|${date}|${row[5]}|${row[7]}`;
+    if (seen.has(key)) continue;
+    const parts = words(name);
+    if (!terms.every(t => parts.some(p => p.startsWith(t)))) continue;
+    const reg = byId.get(id);
+    if (county !== null && (!reg || reg.c !== county)) continue;
+    if (place && !fold(rowPlace).includes(place)) continue;
+    const year = Number(String(date).slice(0, 4)) || (reg ? reg.y0 : null);
+    if (from && year && year < from) continue;
+    if (to && year && year > to) continue;
+    seen.add(key); nameMatches.push(row);
+  }
+  nameMatches.sort((a, b) => String(a[4]).localeCompare(String(b[4])) || a[1].localeCompare(b[1], "ro"));
+  nameShown = 0; moreNames();
+  $("n-count").textContent = `${fmt(nameMatches.length)} matching name${nameMatches.length === 1 ? "" : "s"} · index covers ${fmt(names.records)} of ${fmt(data.items.length)} registers`;
+  $("n-csv").disabled = !nameMatches.length;
+}
+function moreNames() {
+  const terms = [...new Set(words($("n-q").value))];
+  const body = $("n-rows");
+  if (!nameMatches.length) { const c = body.insertRow().insertCell(); c.colSpan = 6; c.className = "empty"; c.textContent = "No names match. Try fewer words, just the surname, or fewer filters."; }
+  for (const [id, name, place, event, date, act, page, image] of nameMatches.slice(nameShown, nameShown + PAGE)) {
+    const reg = byId.get(id);
+    const r = body.insertRow();
+    const n = r.insertCell(); n.className = "name"; highlight(n, name, terms, true);
+    r.insertCell().textContent = event || "";
+    const d = r.insertCell(); d.className = "nowrap"; d.textContent = date || "";
+    r.insertCell().textContent = place || "";
+    const ap = r.insertCell(); ap.className = "nowrap";
+    ap.textContent = [act && `act ${act}`, page && `p. ${page}`].filter(Boolean).join(" · ");
+    if (image) { const s = document.createElement("div"); s.className = "sub"; s.textContent = `image ${image}`; ap.append(s); }
+    const rc = r.insertCell();
+    rc.append(link(`${data.source}/cota/?cid=${id}`, reg ? reg.call : `record ${id}`));
+    if (reg) { const s = document.createElement("div"); s.className = "sub"; s.textContent = `${data.counties[reg.c].name} · ${reg.years}`; rc.append(s); }
+  }
+  nameShown = Math.min(nameShown + PAGE, nameMatches.length);
+  $("n-more").hidden = nameShown >= nameMatches.length;
+  $("n-more").textContent = `Show more (${fmt(nameMatches.length - nameShown)} left)`;
+}
+$("n-more").onclick = moreNames;
+$("n-csv").onclick = () => csv("stare-civila-names.csv", [["name", "event", "date", "place", "act", "page", "image", "county", "call_number", "register_title", "record_url"],
+  ...nameMatches.map(([id, name, place, event, date, act, page, image]) => { const reg = byId.get(id); return [name, event, date, place, act, page, image || "", reg ? data.counties[reg.c].name : "", reg ? reg.call : "", reg ? reg.title : "", `${data.source}/cota/?cid=${id}`]; })]);
 
-let timer;
-for (const id of ["q", "county", "from", "to"]) $(id).addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(run, 120); });
-$("more").onclick = more;
-window.addEventListener("hashchange", () => { readHash(); run(); });
-load();
+/* ---------- wiring ---------- */
+function debounce(fn) { let t; return () => { clearTimeout(t); t = setTimeout(fn, 250); }; }
+const nameInput = debounce(runNames), regInput = debounce(runRegisters);
+for (const id of FIELDS.names) $(id).addEventListener("input", nameInput);
+for (const id of FIELDS.registers) $(id).addEventListener("input", regInput);
+window.addEventListener("hashchange", () => { readHash(); tab === "names" ? runNames() : runRegisters(); });
+
+(async () => {
+  readHash();
+  try { await loadCatalogue(); }
+  catch (error) { $("count").textContent = $("n-count").textContent = `Could not load the catalogue (${error.message}).`; return; }
+  $("footer").textContent = `${fmt(data.rows.length)} indexed registers from ${data.counties.length} counties · catalogue built ${data.generated_at.slice(0, 10)} from the public search of the Archives. Not affiliated with the National Archives of Romania.`;
+  await loadNames();
+  runRegisters();
+  if (tab === "names") runNames();
+})();
 </script>
 </body>
 </html>

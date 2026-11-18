@@ -5,3 +5,4 @@ venv/
 *.zip
 /idx_store/
 .idea/
+/site/data/names/
