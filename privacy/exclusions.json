@@ -1,0 +1,5 @@
+{
+  "_comment": "Removal requests: register ids in records drop a whole register; entries drop one person (record_id + name exactly as shown on the site). Applied at every deploy.",
+  "records": [],
+  "entries": []
+}

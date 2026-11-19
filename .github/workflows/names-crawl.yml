@@ -66,6 +66,21 @@ jobs:
             gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" || echo "::warning::Could not start a Pages deploy"
           done
           python names.py --store names-data/names --stats
+      - name: Retry failed registers once everything has been tried
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          read -r done all < <(python names.py --store names-data/names --stats | tail -n 1 | awk '{split($2, a, "/"); print a[1], a[2]}')
+          [ "$done" -lt "$all" ] && { echo "Registers still untried; retries wait until the end."; exit 0; }
+          python names.py --store names-data/names --retry-errors --max-minutes 55 | tail -n 3
+          git -C names-data add names
+          if ! git -C names-data diff --cached --quiet; then
+            summary=$(python names.py --store names-data/names --stats | tail -n 1)
+            git -C names-data commit -q -m "Retry failed registers: ${summary//  / }"
+            git -C names-data push -q origin HEAD:names-data
+            gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" || echo "::warning::Could not start a Pages deploy"
+          fi
       - name: Start the next run if registers remain
         if: success() && steps.crawl.outputs.progressed == 'true'
         env:

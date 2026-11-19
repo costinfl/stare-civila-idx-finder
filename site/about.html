@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Despre · Stare Civilă IDX Finder</title>
+  <style>
+    :root { color-scheme: light; --ink:#182431; --muted:#5d6d7c; --line:#dce3e8; --blue:#165d87; --paper:#fff; --wash:#f3f6f8; --tab:#e8eef2; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --ink:#e3e9ee; --muted:#9aabb9; --line:#2c3a46; --blue:#7cc0ea; --paper:#17212a; --wash:#0f171e; --tab:#22303b; } }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--wash); color:var(--ink); font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { max-width:820px; margin:0 auto; padding:28px 22px 56px; }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .lang { display:flex; gap:4px; }
+    .lang button { border:0; border-radius:7px; background:var(--tab); color:var(--ink); padding:5px 9px; font:inherit; font-size:12px; font-weight:650; cursor:pointer; }
+    .lang button[aria-pressed="true"] { background:var(--blue); color:var(--paper); }
+    h1 { font-size:clamp(24px,4vw,32px); line-height:1.2; letter-spacing:-.02em; margin:14px 0 6px; }
+    h2 { font-size:18px; margin:26px 0 6px; }
+    .panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:6px 22px 18px; margin-top:16px; }
+    a { color:var(--blue); }
+    li { margin:4px 0; }
+    .muted { color:var(--muted); font-size:13px; }
+    [hidden] { display:none !important; }
+    @media (max-width:560px) { main { padding:18px 16px 40px; } .panel { padding:4px 16px 14px; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <a href="index.html" id="back">← Stare Civilă IDX Finder</a>
+    <div class="lang"><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-en" aria-pressed="false">EN</button></div>
+  </div>
+
+  <article lang="ro" id="content-ro">
+    <h1>Despre proiect, sursa datelor și date personale</h1>
+    <div class="panel">
+      <h2>Ce este</h2>
+      <p>Un instrument independent și necomercial care face mai ușoară căutarea în indexurile de nume (fișierele <strong>IDX</strong>) atașate registrelor de stare civilă publicate de Arhivele Naționale ale României pe <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a>. Proiectul <strong>nu este afiliat</strong> Arhivelor Naționale și nu vorbește în numele lor.</p>
+
+      <h2>Sursa și licența datelor</h2>
+      <ul>
+        <li>Datele provin de pe portalul Arhivelor Naționale, care le distribuie sub licența <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ro" rel="noopener">CC BY-NC-ND 4.0</a> (atribuire, necomercial, fără lucrări derivate).</li>
+        <li><strong>Atribuire:</strong> Arhivele Naționale ale României, descopera.arhivelenationale.ro. Fiecare rezultat trimite la pagina registrului pe portalul Arhivelor.</li>
+        <li><strong>Fără modificări:</strong> numele, localitățile, datele, numerele de act și de pagină și numele imaginilor sunt afișate exact cum apar în fișierele IDX. Forme normalizate (fără diacritice, variante de scriere, date sortabile, tipul evenimentului) sunt folosite doar intern, pentru căutare, sortare și filtrare.</li>
+        <li><strong>Necomercial:</strong> site-ul este gratuit, fără reclame, și nu poate fi folosit în scop comercial. Codul sursă este dedicat domeniului public (CC0); datele rămân sub licența Arhivelor (vezi <a href="https://github.com/costinfl/stare-civila-idx-finder/blob/main/NOTICE.md" rel="noopener">NOTICE.md</a>).</li>
+      </ul>
+
+      <h2>Cum sunt colectate datele</h2>
+      <ul>
+        <li>Folosim doar căutarea publică a portalului și fișierele IDX atașate public registrelor; nu accesăm imaginile registrelor.</li>
+        <li>Cererile sunt făcute rar și politicos: cel mult una la fiecare 1,25 secunde, de un singur proces, cu un User-Agent care identifică proiectul și trimite la acest depozit.</li>
+        <li>Fișierul <code>robots.txt</code> al portalului conține două reguli contradictorii pentru toți roboții (una interzice totul, una permite totul). Am considerat-o o configurare neintenționată și am limitat strict ritmul cererilor. <strong>Dacă Arhivele Naționale ne cer să ne oprim, oprim colectarea</strong> și, la cerere, eliminăm datele.</li>
+      </ul>
+
+      <h2>Date personale</h2>
+      <ul>
+        <li>Registrele de stare civilă conțin date personale. Arhivele le publică doar după expirarea termenelor de protecție.</li>
+        <li>Ca măsură suplimentară, <strong>nu publicăm intrările din ultimii 100 de ani</strong> (după data evenimentului sau, dacă lipsește, după ultimul an al registrului).</li>
+        <li>Paginile site-ului cer motoarelor de căutare să nu le indexeze, iar căutarea rulează doar în browserul dumneavoastră; nu colectăm date despre vizitatori și nu folosim cookie-uri.</li>
+        <li><strong>Cereri de eliminare:</strong> dacă o intrare vă privește pe dumneavoastră sau pe o rudă și doriți să fie eliminată, <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new?template=removal-request.yml" rel="noopener">deschideți o cerere de eliminare</a>. Eliminarea se aplică la următoarea publicare a site-ului. Datele rămân disponibile pe portalul Arhivelor.</li>
+      </ul>
+
+      <h2>Exactitate</h2>
+      <p>Indexurile IDX sunt transcrieri și pot conține greșeli; extragerea automată din PDF poate introduce și ea erori. Verificați întotdeauna imaginea originală a registrului. Erorile pot fi semnalate cu butonul <em>Raportează</em> de lângă fiecare rezultat. Site-ul este oferit „ca atare”, fără garanții.</p>
+
+      <p class="muted">Contact: <a href="https://github.com/costinfl/stare-civila-idx-finder/issues" rel="noopener">GitHub issues</a>. Acest text nu constituie consultanță juridică.</p>
+    </div>
+  </article>
+
+  <article lang="en" id="content-en" hidden>
+    <h1>About, data source and personal data</h1>
+    <div class="panel">
+      <h2>What this is</h2>
+      <p>An independent, non-commercial tool that makes it easier to search the name indexes (<strong>IDX</strong> files) attached to civil-status registers published by the National Archives of Romania on <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a>. It is <strong>not affiliated</strong> with the National Archives and does not speak for them.</p>
+
+      <h2>Data source and licence</h2>
+      <ul>
+        <li>The data comes from the National Archives’ portal, which distributes it under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="noopener">CC BY-NC-ND 4.0</a> (attribution, non-commercial, no derivatives).</li>
+        <li><strong>Attribution:</strong> National Archives of Romania, descopera.arhivelenationale.ro. Every result links to the register’s page on the Archives’ portal.</li>
+        <li><strong>Unaltered:</strong> names, places, dates, act and page numbers and image names are shown exactly as they appear in the IDX files. Normalised forms (no diacritics, spelling variants, sortable dates, event type) are used only internally for searching, sorting and filtering.</li>
+        <li><strong>Non-commercial:</strong> the site is free, has no ads and may not be used commercially. The source code is dedicated to the public domain (CC0); the data stays under the Archives’ licence (see <a href="https://github.com/costinfl/stare-civila-idx-finder/blob/main/NOTICE.md" rel="noopener">NOTICE.md</a>).</li>
+      </ul>
+
+      <h2>How the data is collected</h2>
+      <ul>
+        <li>Only the portal’s public search and the IDX files publicly attached to registers are used; register images are not accessed.</li>
+        <li>Requests are rare and polite: at most one every 1.25 seconds, from a single process, with a User-Agent that identifies the project and links to this repository.</li>
+        <li>The portal’s <code>robots.txt</code> contains two contradictory rules for all robots (one disallows everything, one allows everything). We treat this as unintended and strictly limit our request rate. <strong>If the National Archives ask us to stop, we stop collecting</strong> and, on request, remove the data.</li>
+      </ul>
+
+      <h2>Personal data</h2>
+      <ul>
+        <li>Civil-status registers contain personal data. The Archives publish them only after their protection periods expire.</li>
+        <li>As an extra safeguard, <strong>entries from the last 100 years are not published here</strong> (by event date or, when missing, by the register’s last year).</li>
+        <li>The site asks search engines not to index its pages, and searching runs only in your browser; we collect no visitor data and use no cookies.</li>
+        <li><strong>Removal requests:</strong> if an entry concerns you or a relative and you want it removed, <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new?template=removal-request.yml" rel="noopener">open a removal request</a>. Removals apply from the next site publish. The data remains available on the Archives’ portal.</li>
+      </ul>
+
+      <h2>Accuracy</h2>
+      <p>IDX indexes are transcriptions and can contain mistakes; automatic extraction from the PDFs can add errors too. Always check the original register image. Errors can be reported with the <em>Report</em> button next to each result. The site is provided “as is”, without warranty.</p>
+
+      <p class="muted">Contact: <a href="https://github.com/costinfl/stare-civila-idx-finder/issues" rel="noopener">GitHub issues</a>. This text is not legal advice.</p>
+    </div>
+  </article>
+</main>
+<script>
+(() => {
+  const get = () => { try { return localStorage.getItem("lang"); } catch { return null; } };
+  const set = (v) => { try { localStorage.setItem("lang", v); } catch {} };
+  const fromHash = new URLSearchParams(location.hash.slice(1)).get("lang");
+  let lang = fromHash || get() || ((navigator.language || "").toLowerCase().startsWith("ro") ? "ro" : "en");
+  function apply() {
+    lang = lang === "en" ? "en" : "ro";
+    document.documentElement.lang = lang;
+    document.getElementById("content-ro").hidden = lang !== "ro";
+    document.getElementById("content-en").hidden = lang !== "en";
+    document.getElementById("lang-ro").setAttribute("aria-pressed", lang === "ro");
+    document.getElementById("lang-en").setAttribute("aria-pressed", lang === "en");
+    document.getElementById("back").href = `index.html#lang=${lang}`;
+    document.title = lang === "ro" ? "Despre · Stare Civilă IDX Finder" : "About · Stare Civilă IDX Finder";
+  }
+  for (const v of ["ro", "en"]) document.getElementById(`lang-${v}`).onclick = () => { lang = v; set(v); history.replaceState(null, "", `#lang=${v}`); apply(); };
+  apply();
+})();
+</script>
+</body>
+</html>

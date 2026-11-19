@@ -1,0 +1,28 @@
+name: Semnalează o eroare / Report an entry
+description: O intrare lipsă, greșit extrasă sau cu coloane amestecate. / An entry that is missing, misread or has mixed-up columns.
+title: "[Entry] "
+labels: ["data-quality"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Verificați întâi imaginea originală a registrului: dacă greșeala există și în fișierul IDX al Arhivelor, nu o putem corecta aici.
+        First check the original register image: if the mistake is also in the Archives' IDX file, we can't correct it here.
+  - type: input
+    id: record_url
+    attributes:
+      label: Link registru / Register link
+    validations:
+      required: true
+  - type: textarea
+    id: entry
+    attributes:
+      label: Intrarea așa cum apare pe site / The entry as shown on the site
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Ce este greșit? / What is wrong?
+    validations:
+      required: true

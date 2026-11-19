@@ -19,7 +19,7 @@ ARCHIVE = "https://descopera.arhivelenationale.ro"
 AJAX = ARCHIVE + "/wp-admin/admin-ajax.php?action=get_advanced_search"
 COUNT_HINT = "56435"
 PAGE_SIZE = 100
-USER_AGENT = "StareCivilaIDXFinder/1.0 (local research tool)"
+USER_AGENT = "StareCivilaIDXFinder/1.1 (+https://github.com/costinfl/stare-civila-idx-finder)"
 REQUEST_INTERVAL = 1.25
 _rate_lock = threading.Lock()
 _last_request = 0.0
