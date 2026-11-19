@@ -1,7 +1,8 @@
 name: Refresh catalogue
 
 # Monthly and on demand: re-runs the polite listing crawl (~500 requests, one every
-# 1.25 s) and commits the updated site/data/catalogue.json.
+# 1.25 s), rebuilds the historical place names from Wikidata, and commits
+# site/data/catalogue.json and site/data/places.json.
 on:
   schedule:
     - cron: "41 3 2 * *"  # monthly, to pick up newly uploaded IDX files
@@ -20,10 +21,14 @@ jobs:
         with:
           python-version: "3.12"
       - run: python crawl.py --refresh
-      - name: Commit catalogue if it changed
+      - name: Refresh historical place names (Wikidata)
+        # A failure here (e.g. the SPARQL endpoint is busy) keeps last month's file.
+        continue-on-error: true
+        run: python places_build.py
+      - name: Commit catalogue and place names if they changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-          git add site/data/catalogue.json
-          git diff --cached --quiet || git commit -m "Refresh IDX catalogue"
+          git add site/data/catalogue.json site/data/places.json
+          git diff --cached --quiet || git commit -m "Refresh IDX catalogue and place names"
           git push

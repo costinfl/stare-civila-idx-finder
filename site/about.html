@@ -29,7 +29,7 @@
 <main>
   <div class="top">
     <a href="index.html" id="back">← Stare Civilă IDX Finder</a>
-    <div class="lang"><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-en" aria-pressed="false">EN</button></div>
+    <div class="lang"><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-hu" aria-pressed="false">HU</button><button id="lang-en" aria-pressed="false">EN</button></div>
   </div>
 
   <article lang="ro" id="content-ro">
@@ -60,6 +60,9 @@
         <li>Paginile site-ului cer motoarelor de căutare să nu le indexeze, iar căutarea rulează doar în browserul dumneavoastră; nu colectăm date despre vizitatori și nu folosim cookie-uri.</li>
         <li><strong>Cereri de eliminare:</strong> dacă o intrare vă privește pe dumneavoastră sau pe o rudă și doriți să fie eliminată, <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new?template=removal-request.yml" rel="noopener">deschideți o cerere de eliminare</a>. Eliminarea se aplică la următoarea publicare a site-ului. Datele rămân disponibile pe portalul Arhivelor.</li>
       </ul>
+
+      <h2>Nume istorice ale localităților</h2>
+      <p>Pagina <a href="places.html#lang=ro">Nume istorice</a> și căutarea după localitate folosesc numele maghiare, germane și din alte limbi ale localităților din România, preluate din <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0) și actualizate lunar. O formă lipsă sau greșită se corectează direct în Wikidata.</p>
 
       <h2>Exactitate</h2>
       <p>Indexurile IDX sunt transcrieri și pot conține greșeli; extragerea automată din PDF poate introduce și ea erori. Verificați întotdeauna imaginea originală a registrului. Erorile pot fi semnalate cu butonul <em>Raportează</em> de lângă fiecare rezultat. Site-ul este oferit „ca atare”, fără garanții.</p>
@@ -97,10 +100,52 @@
         <li><strong>Removal requests:</strong> if an entry concerns you or a relative and you want it removed, <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new?template=removal-request.yml" rel="noopener">open a removal request</a>. Removals apply from the next site publish. The data remains available on the Archives’ portal.</li>
       </ul>
 
+      <h2>Historical place names</h2>
+      <p>The <a href="places.html#lang=en">Historical names</a> page and the place search use the Hungarian, German and other names of Romanian settlements from <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), refreshed monthly. A missing or wrong form can be corrected directly on Wikidata.</p>
+
       <h2>Accuracy</h2>
       <p>IDX indexes are transcriptions and can contain mistakes; automatic extraction from the PDFs can add errors too. Always check the original register image. Errors can be reported with the <em>Report</em> button next to each result. The site is provided “as is”, without warranty.</p>
 
       <p class="muted">Contact: <a href="https://github.com/costinfl/stare-civila-idx-finder/issues" rel="noopener">GitHub issues</a>. This text is not legal advice.</p>
+    </div>
+  </article>
+
+  <article lang="hu" id="content-hu" hidden>
+    <h1>Névjegy, adatforrás és személyes adatok</h1>
+    <div class="panel">
+      <h2>Mi ez?</h2>
+      <p>Független, nem kereskedelmi eszköz, amely megkönnyíti a keresést a romániai Nemzeti Levéltár által a <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a> portálon közzétett anyakönyvekhez csatolt névmutatókban (<strong>IDX</strong> fájlok). A projekt <strong>nem kapcsolódik</strong> a Nemzeti Levéltárhoz, és nem az ő nevükben szól. A romániai magyar közösség története elválaszthatatlan az ország történetétől; a felület ezért magyarul is elérhető, és a helységek magyar nevei is kereshetők.</p>
+
+      <h2>Adatforrás és licenc</h2>
+      <ul>
+        <li>Az adatok a Nemzeti Levéltár portáljáról származnak, amely azokat a <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.hu" rel="noopener">CC BY-NC-ND 4.0</a> licenc alatt teszi közzé (forrásmegjelölés, nem kereskedelmi célra, változtatás nélkül).</li>
+        <li><strong>Forrás:</strong> Románia Nemzeti Levéltára, descopera.arhivelenationale.ro. Minden találat az anyakönyv portálon lévő oldalára mutat.</li>
+        <li><strong>Változtatás nélkül:</strong> a nevek, helységek, dátumok, bejegyzés- és oldalszámok, valamint a képek nevei pontosan úgy jelennek meg, ahogyan az IDX fájlokban szerepelnek. Az egységesített alakokat (ékezet nélküli írás, írásváltozatok, rendezhető dátumok, eseménytípus) csak belsőleg használjuk keresésre, rendezésre és szűrésre.</li>
+        <li><strong>Nem kereskedelmi:</strong> az oldal ingyenes, reklámmentes, és kereskedelmi célra nem használható. A forráskód közkincs (CC0); az adatokra a Levéltár licence vonatkozik (lásd <a href="https://github.com/costinfl/stare-civila-idx-finder/blob/main/NOTICE.md" rel="noopener">NOTICE.md</a>).</li>
+      </ul>
+
+      <h2>Hogyan gyűjtjük az adatokat?</h2>
+      <ul>
+        <li>Csak a portál nyilvános keresőjét és az anyakönyvekhez nyilvánosan csatolt IDX fájlokat használjuk; az anyakönyvek képeit nem töltjük le.</li>
+        <li>A kérések ritkák és kíméletesek: legfeljebb egy 1,25 másodpercenként, egyetlen folyamatból, olyan User-Agenttel, amely azonosítja a projektet és erre a tárolóra mutat.</li>
+        <li>A portál <code>robots.txt</code> fájlja két egymásnak ellentmondó szabályt tartalmaz minden robot számára (az egyik mindent tilt, a másik mindent enged). Ezt nem szándékos beállításnak tekintjük, és szigorúan korlátozzuk a kérések ütemét. <strong>Ha a Nemzeti Levéltár kéri, leállítjuk a gyűjtést</strong>, és kérésre töröljük az adatokat.</li>
+      </ul>
+
+      <h2>Személyes adatok</h2>
+      <ul>
+        <li>Az anyakönyvek személyes adatokat tartalmaznak. A Levéltár csak a védelmi idő lejárta után teszi közzé őket.</li>
+        <li>További óvintézkedésként <strong>az utolsó 100 év bejegyzéseit nem tesszük közzé</strong> (az esemény dátuma, ennek hiányában az anyakönyv utolsó éve alapján).</li>
+        <li>Az oldalak arra kérik a keresőmotorokat, hogy ne indexeljék őket, a keresés pedig csak az Ön böngészőjében fut; látogatói adatokat nem gyűjtünk, sütiket nem használunk.</li>
+        <li><strong>Törlési kérelem:</strong> ha egy bejegyzés Önt vagy hozzátartozóját érinti, és szeretné eltávolíttatni, <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new?template=removal-request.yml" rel="noopener">nyújtson be törlési kérelmet</a>. A törlés az oldal következő közzétételétől érvényes. Az adatok a Levéltár portálján továbbra is elérhetők.</li>
+      </ul>
+
+      <h2>Helységek történelmi nevei</h2>
+      <p>A <a href="places.html#lang=hu">Történelmi nevek</a> oldal és a helységkeresés a romániai települések magyar, német és más nyelvű neveit használja, a <a href="https://www.wikidata.org/" rel="noopener">Wikidatából</a> (CC0), havonta frissítve. A hiányzó vagy hibás névalak közvetlenül a Wikidatán javítható.</p>
+
+      <h2>Pontosság</h2>
+      <p>Az IDX mutatók átírások, és tartalmazhatnak hibákat; a PDF-ekből történő automatikus kinyerés is okozhat hibát. Mindig ellenőrizze az anyakönyv eredeti képét. A hibák minden találat mellett a <em>Hibajelzés</em> gombbal jelezhetők. Az oldal „ahogy van” alapon, garancia nélkül érhető el.</p>
+
+      <p class="muted">Kapcsolat: <a href="https://github.com/costinfl/stare-civila-idx-finder/issues" rel="noopener">GitHub issues</a>. Ez a szöveg nem jogi tanácsadás. A magyar fordítás javítását szívesen fogadjuk.</p>
     </div>
   </article>
 </main>
@@ -109,18 +154,20 @@
   const get = () => { try { return localStorage.getItem("lang"); } catch { return null; } };
   const set = (v) => { try { localStorage.setItem("lang", v); } catch {} };
   const fromHash = new URLSearchParams(location.hash.slice(1)).get("lang");
-  let lang = fromHash || get() || ((navigator.language || "").toLowerCase().startsWith("ro") ? "ro" : "en");
+  const LANGS = ["ro", "hu", "en"], TITLES = { ro: "Despre", hu: "Névjegy", en: "About" };
+  const browser = (navigator.language || "").toLowerCase();
+  let lang = fromHash || get() || (browser.startsWith("hu") ? "hu" : browser.startsWith("ro") ? "ro" : "en");
   function apply() {
-    lang = lang === "en" ? "en" : "ro";
+    if (!LANGS.includes(lang)) lang = "ro";
     document.documentElement.lang = lang;
-    document.getElementById("content-ro").hidden = lang !== "ro";
-    document.getElementById("content-en").hidden = lang !== "en";
-    document.getElementById("lang-ro").setAttribute("aria-pressed", lang === "ro");
-    document.getElementById("lang-en").setAttribute("aria-pressed", lang === "en");
+    for (const l of LANGS) {
+      document.getElementById(`content-${l}`).hidden = lang !== l;
+      document.getElementById(`lang-${l}`).setAttribute("aria-pressed", lang === l);
+    }
     document.getElementById("back").href = `index.html#lang=${lang}`;
-    document.title = lang === "ro" ? "Despre · Stare Civilă IDX Finder" : "About · Stare Civilă IDX Finder";
+    document.title = `${TITLES[lang]} · Stare Civilă IDX Finder`;
   }
-  for (const v of ["ro", "en"]) document.getElementById(`lang-${v}`).onclick = () => { lang = v; set(v); history.replaceState(null, "", `#lang=${v}`); apply(); };
+  for (const v of LANGS) document.getElementById(`lang-${v}`).onclick = () => { lang = v; set(v); history.replaceState(null, "", `#lang=${v}`); apply(); };
   apply();
 })();
 </script>
