@@ -10,6 +10,7 @@ aliases are kept as older spellings. Entries with the same Romanian name in the
 same county are merged (a city is often both a municipality and a locality).
 
     python places_build.py            # ~43 small queries, one a minute (~45 min)
+                                      # rerun to resume: idx_store/places_cache/ keeps each county
 
 Output: {"generated_at", "source", "languages", "places": [[qid, ro_name, county, {lang: [names]}], ...]}
 """
@@ -27,6 +28,7 @@ import server
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "site" / "data" / "places.json"
+CACHE = ROOT / "idx_store" / "places_cache"  # per-county results, so a rate-limited run can resume
 # The classic query.wikidata.org may be rate-limited during incidents; the
 # main-graph endpoint and QLever serve the same Wikidata data.
 ENDPOINTS = ["https://query-main.wikidata.org/sparql", "https://qlever.dev/api/wikidata"]
@@ -51,7 +53,7 @@ def fold(text: str) -> str:
 def sparql(query: str) -> list[dict]:
     """Run a query, trying each endpoint in turn; back off and retry on errors (timeouts, 429s)."""
     last_error: Exception | None = None
-    for attempt in range(3):
+    for attempt in range(6):
         for endpoint in ENDPOINTS:
             url = endpoint + "?" + urllib.parse.urlencode({"query": PREFIXES + query})
             try:
@@ -61,7 +63,7 @@ def sparql(query: str) -> list[dict]:
             except Exception as error:
                 last_error = error
                 print(f"  {endpoint.split('/')[2]}: {error}", flush=True)
-        time.sleep(65 * (attempt + 1))
+        time.sleep(90 + 30 * attempt)
     raise RuntimeError(f"every SPARQL endpoint failed: {last_error}")
 
 
@@ -108,11 +110,19 @@ def main() -> None:
     scopes = [f"BIND(wd:{qid} AS ?county) ?item wdt:P131+ ?county ." for qid, _ in county_list]
     scopes.append(f"VALUES ?item {{ wd:{BUCHAREST} }} BIND(wd:{BUCHAREST} AS ?county)")
     items: dict[tuple[str, str], dict] = {}
-    for scope, (_, name) in zip(scopes, county_list + [(BUCHAREST, "București")]):
-        time.sleep(PAUSE)
-        found = collect(sparql(names_query(scope)), county_names)
+    CACHE.mkdir(parents=True, exist_ok=True)
+    for scope, (qid, name) in zip(scopes, county_list + [(BUCHAREST, "București")]):
+        cached = CACHE / f"{qid}.json"
+        from_cache = cached.exists()
+        if from_cache:
+            rows = json.loads(cached.read_text(encoding="utf-8"))
+        else:
+            time.sleep(PAUSE)
+            rows = sparql(names_query(scope))
+            cached.write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
+        found = collect(rows, county_names)
         items.update(found)
-        print(f"{name}: {len(found)} items", flush=True)
+        print(f"{name}: {len(found)} items{' (cached)' if from_cache else ''}", flush=True)
     places: dict[tuple[str, str], dict] = {}
     for (item_id, county), item in items.items():
         ro_names = sorted(item["names"].get("ro", set()), key=lambda n: (len(n), n))
