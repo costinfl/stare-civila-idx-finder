@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Nume istorice · Stare Civilă IDX Finder</title>
+  <style>
+    :root { color-scheme: light; --ink:#182431; --muted:#5d6d7c; --line:#dce3e8; --blue:#165d87; --blue-dark:#104665; --paper:#fff; --wash:#f3f6f8; --mark:#fff1b8; --focus:#165d8733; --tab:#e8eef2; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --ink:#e3e9ee; --muted:#9aabb9; --line:#2c3a46; --blue:#7cc0ea; --blue-dark:#a5d4f2; --paper:#17212a; --wash:#0f171e; --mark:#5b4a12; --focus:#7cc0ea40; --tab:#22303b; } }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--wash); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { max-width:1180px; margin:0 auto; padding:28px 22px 56px; }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; font-size:13px; }
+    .lang { display:flex; gap:4px; align-items:center; }
+    .lang a { margin-right:8px; }
+    .lang button { border:0; border-radius:7px; background:var(--tab); color:var(--ink); padding:5px 9px; font:inherit; font-size:12px; font-weight:650; cursor:pointer; }
+    .lang button[aria-pressed="true"] { background:var(--blue); color:var(--paper); }
+    h1 { font-size:clamp(24px,4vw,32px); line-height:1.2; letter-spacing:-.02em; margin:14px 0 6px; }
+    header p { margin:4px 0 0; color:var(--muted); max-width:860px; }
+    .panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:18px; margin:18px 0; }
+    .filters { display:grid; grid-template-columns:2fr 1fr; gap:12px; align-items:end; }
+    label { display:block; font-weight:650; font-size:13px; margin:0 0 5px; }
+    input, select { width:100%; border:1px solid var(--line); background:var(--paper); color:var(--ink); border-radius:7px; padding:9px 10px; font:inherit; }
+    input:focus, select:focus { outline:3px solid var(--focus); border-color:var(--blue); }
+    .meta { margin-top:12px; color:var(--muted); font-size:13px; }
+    .table-wrap { overflow-x:auto; }
+    table { border-collapse:collapse; width:100%; font-size:13.5px; }
+    th, td { text-align:left; vertical-align:top; padding:9px 8px; border-bottom:1px solid var(--line); }
+    th { font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+    td.ro { font-weight:600; }
+    td.tools { white-space:nowrap; font-size:12.5px; }
+    td.tools > * + * { margin-left:10px; }
+    .tag { display:inline-block; font-size:10.5px; font-weight:650; color:var(--muted); border:1px solid var(--line); border-radius:4px; padding:0 4px; margin-right:4px; vertical-align:1px; }
+    span.n { margin-right:10px; display:inline-block; }
+    td.ro span.n + span.n { font-weight:400; color:var(--muted); }
+    a { color:var(--blue); }
+    mark { background:var(--mark); color:inherit; border-radius:2px; }
+    .empty { color:var(--muted); padding:18px 4px; }
+    .more { text-align:center; margin-top:14px; }
+    .more button { border:0; border-radius:7px; padding:8px 13px; background:var(--blue); color:var(--paper); font:inherit; font-size:13px; font-weight:650; cursor:pointer; }
+    footer { color:var(--muted); font-size:12.5px; margin-top:24px; }
+    [hidden] { display:none !important; }
+    @media (max-width:760px) {
+      main { padding:18px 16px 40px; }
+      .filters { grid-template-columns:1fr; }
+      thead { display:none; }
+      table, tbody, tr, td { display:block; width:100%; }
+      tr { border-bottom:1px solid var(--line); padding:8px 0; }
+      td { border:0; padding:2px 0; }
+      td[data-label]::before { content:attr(data-label) " "; color:var(--muted); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <a href="index.html" id="back">← Stare Civilă IDX Finder</a>
+    <div class="lang"><a href="about.html" id="about-link" data-i18n="about"></a><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-hu" aria-pressed="false">HU</button><button id="lang-en" aria-pressed="false">EN</button></div>
+  </div>
+  <header>
+    <h1 data-i18n="title"></h1>
+    <p data-i18n="intro"></p>
+  </header>
+  <section class="panel">
+    <div class="filters">
+      <div><label for="q" data-i18n="lblQ"></label><input id="q" type="search" data-i18n-ph="phQ" autocomplete="off"></div>
+      <div><label for="county" data-i18n="lblCounty"></label><select id="county"></select></div>
+    </div>
+    <div class="meta" id="count" role="status" aria-live="polite"></div>
+  </section>
+  <section class="panel">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th data-i18n="thRo"></th><th data-i18n="thCounty"></th><th>Magyar</th><th>Deutsch</th><th data-i18n="thOther"></th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="more"><button id="more" hidden></button></div>
+  </section>
+  <footer data-i18n-html="footer"></footer>
+</main>
+<script>
+const I18N = {
+  ro: {
+    title: "Nume istorice ale localităților", about: "Despre și date personale",
+    intro: "Multe localități din România au avut și au și alte nume – maghiare, germane, sârbești, ucrainene, turcești și altele – iar registrele vechi le folosesc adesea. Căutați după oricare dintre ele pentru a găsi numele românesc actual și celelalte forme.",
+    lblQ: "Caută o localitate (în orice limbă)", phQ: "ex. Nagyszalonta, Hermannstadt, Salonta", lblCounty: "Județ", allCounties: "Toate județele",
+    thRo: "Nume românesc", thCounty: "Județ", thOther: "Alte nume",
+    count: "{n} localități", countFiltered: "{n} din {total} localități", search: "Caută în registre", wikidata: "Wikidata",
+    notBuilt: "Lista de nume istorice nu a fost încă generată; reveniți în curând.",
+    more: "Mai multe ({n} rămase)", none: "Nicio localitate găsită.", loading: "Se încarcă…", error: "Datele nu au putut fi încărcate ({e}).",
+    footer: 'Nume: <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), actualizate lunar. O formă lipsă sau greșită se corectează direct în Wikidata (linkul de pe fiecare rând) sau <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new" rel="noopener">semnalând-o aici</a>.',
+  },
+  hu: {
+    title: "Helységek történelmi nevei", about: "Névjegy és adatvédelem",
+    intro: "Romániában sok helységnek más – magyar, német, szerb, ukrán, török és egyéb – neve is volt és van, és a régi anyakönyvek gyakran ezeket használják. Keressen bármelyikre, hogy megtalálja a mai román nevet és a többi névalakot.",
+    lblQ: "Helység keresése (bármely nyelven)", phQ: "pl. Nagyszalonta, Hermannstadt, Salonta", lblCounty: "Megye", allCounties: "Minden megye",
+    thRo: "Román név", thCounty: "Megye", thOther: "Egyéb nevek",
+    count: "{n} helység", countFiltered: "{n} / {total} helység", search: "Keresés az anyakönyvekben", wikidata: "Wikidata",
+    notBuilt: "A történelmi nevek listája még nem készült el; nézzen vissza hamarosan.",
+    more: "Továbbiak ({n} maradt)", none: "Nincs ilyen helység.", loading: "Betöltés…", error: "Az adatok nem tölthetők be ({e}).",
+    footer: 'Nevek: <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), havonta frissítve. A hiányzó vagy hibás névalak közvetlenül a Wikidatán javítható (a sorokban lévő hivatkozással), vagy <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new" rel="noopener">jelezheti itt</a>.',
+  },
+  en: {
+    title: "Historical place names", about: "About & privacy",
+    intro: "Many places in Romania had, and still have, other names – Hungarian, German, Serbian, Ukrainian, Turkish and more – and old registers often use them. Search any of them to find today’s Romanian name and the other forms.",
+    lblQ: "Find a place (in any language)", phQ: "e.g. Nagyszalonta, Hermannstadt, Salonta", lblCounty: "County", allCounties: "All counties",
+    thRo: "Romanian name", thCounty: "County", thOther: "Other names",
+    count: "{n} places", countFiltered: "{n} of {total} places", search: "Search registers", wikidata: "Wikidata",
+    notBuilt: "The historical names list has not been built yet; please check back soon.",
+    more: "Show more ({n} left)", none: "No places found.", loading: "Loading…", error: "Could not load the data ({e}).",
+    footer: 'Names: <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), refreshed monthly. A missing or wrong form can be fixed directly on Wikidata (link on each row) or <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new" rel="noopener">reported here</a>.',
+  },
+};
+const HU_COUNTIES = { "Alba": "Fehér", "Bihor": "Bihar", "Bistrița-Năsăud": "Beszterce-Naszód", "Brașov": "Brassó", "Caraș-Severin": "Krassó-Szörény",
+  "Cluj": "Kolozs", "Covasna": "Kovászna", "Harghita": "Hargita", "Hunedoara": "Hunyad", "Maramureș": "Máramaros", "Mureș": "Maros",
+  "Satu Mare": "Szatmár", "Sălaj": "Szilágy", "Sibiu": "Szeben", "Timiș": "Temes", "București": "Bukarest" };
+const LANGS = ["ro", "hu", "en"], LOCALES = { ro: "ro-RO", hu: "hu-HU", en: "en-GB" };
+const PAGE = 200;
+const $ = (id) => document.getElementById(id);
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+let lang = "ro", places = [], catalogueCounties = [], matches = [], shown = 0;
+const t = (key, vars = {}) => String(I18N[lang][key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+const fmt = (n) => Number(n).toLocaleString(LOCALES[lang]);
+const fold = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const words = (s) => fold(s).match(/[a-z]+/g) || [];
+// Same rules as variantKey in index.html / names_export.py (tests/variants.json).
+const VARIANT_RULES = [["x", "cs"], ["cs", "ci"], ["sz", "s"], ["zs", "j"], ["gy", "g"], ["ny", "n"], ["ly", "l"],
+  ["ph", "f"], ["th", "t"], ["ck", "c"], ["k", "c"], ["q", "c"], ["w", "v"], ["y", "i"], ["ioa", "io"]];
+function variantKey(word) { for (const [a, b] of VARIANT_RULES) word = word.split(a).join(b); return word.replace(/(.)\1+/g, "$1"); }
+const countyLabel = (name) => lang === "hu" && HU_COUNTIES[name] ? `${name} (${HU_COUNTIES[name]})` : name;
+
+function readHash() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  if (LANGS.includes(p.get("lang"))) lang = p.get("lang");
+  $("q").value = p.get("q") || ""; $("county").dataset.want = p.get("county") || "";
+}
+function writeHash() {
+  const p = new URLSearchParams({ lang });
+  if ($("q").value) p.set("q", $("q").value);
+  if ($("county").value) p.set("county", $("county").value);
+  history.replaceState(null, "", `#${p}`);
+}
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = `${t("title")} · Stare Civilă IDX Finder`;
+  for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll("[data-i18n-html]")) el.innerHTML = t(el.dataset.i18nHtml);
+  for (const el of document.querySelectorAll("[data-i18n-ph]")) el.placeholder = t(el.dataset.i18nPh);
+  for (const l of LANGS) $(`lang-${l}`).setAttribute("aria-pressed", lang === l);
+  $("back").href = `index.html#lang=${lang}`; $("about-link").href = `about.html#lang=${lang}`;
+  const select = $("county"), value = select.value || select.dataset.want || "";
+  select.replaceChildren(new Option(t("allCounties"), ""));
+  for (const name of catalogueCounties) select.append(new Option(countyLabel(name), name));
+  select.value = value;
+}
+for (const l of LANGS) $(`lang-${l}`).onclick = () => { lang = l; store.set("lang", l); applyLang(); run(); };
+
+function run() {
+  writeHash();
+  const query = words($("q").value).map(variantKey), county = $("county").value;
+  matches = places.filter(p => (!county || p.county === county) && query.every(q => p.keys.some(k => k.startsWith(q))));
+  // Exact name matches (in any language) first, then by Romanian name.
+  const full = words($("q").value).join(" ");
+  matches.sort((a, b) => (b.names.has(full) - a.names.has(full)) || a.ro.localeCompare(b.ro, "ro"));
+  shown = 0; $("rows").replaceChildren(); more();
+  $("count").textContent = query.length || county ? t("countFiltered", { n: fmt(matches.length), total: fmt(places.length) }) : t("count", { n: fmt(places.length) });
+}
+function nameCell(cell, list, query) {
+  for (const n of list) {
+    const span = document.createElement("span"); span.className = "n";
+    const hit = query.length && words(n).some(w => query.some(q => variantKey(w).startsWith(q)));
+    if (hit) { const m = document.createElement("mark"); m.textContent = n; span.append(m); } else span.textContent = n;
+    cell.append(span);
+  }
+}
+function more() {
+  const query = words($("q").value).map(variantKey);
+  const body = $("rows");
+  if (!matches.length) { const c = body.insertRow().insertCell(); c.colSpan = 6; c.className = "empty"; c.textContent = t("none"); }
+  for (const p of matches.slice(shown, shown + PAGE)) {
+    const r = body.insertRow();
+    const ro = r.insertCell(); ro.className = "ro"; nameCell(ro, [p.ro, ...(p.other.ro || [])], query);
+    const c = r.insertCell(); c.textContent = countyLabel(p.county); c.dataset.label = t("thCounty");
+    const hu = r.insertCell(); hu.dataset.label = "Magyar"; nameCell(hu, p.other.hu || [], query);
+    const de = r.insertCell(); de.dataset.label = "Deutsch"; nameCell(de, p.other.de || [], query);
+    const other = r.insertCell(); other.className = "other"; other.dataset.label = t("thOther");
+    for (const [l, list] of Object.entries(p.other)) {
+      if (["ro", "hu", "de"].includes(l)) continue;
+      const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = l; other.append(tag);
+      nameCell(other, list, query);
+    }
+    const tools = r.insertCell(); tools.className = "tools";
+    const ci = catalogueCounties.indexOf(p.county);
+    const search = document.createElement("a");
+    search.href = `index.html#${new URLSearchParams({ tab: "names", lang, "n-place": p.ro, ...(ci >= 0 ? { "n-county": ci } : {}) })}`;
+    search.textContent = t("search");
+    const wd = document.createElement("a"); wd.href = `https://www.wikidata.org/wiki/${p.qid}`; wd.target = "_blank"; wd.rel = "noopener"; wd.textContent = t("wikidata");
+    tools.append(search, wd);
+  }
+  shown = Math.min(shown + PAGE, matches.length);
+  $("more").hidden = shown >= matches.length;
+  $("more").textContent = t("more", { n: fmt(matches.length - shown) });
+}
+$("more").onclick = more;
+let timer;
+$("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(run, 200); });
+$("county").addEventListener("change", run);
+window.addEventListener("hashchange", () => { readHash(); applyLang(); run(); });
+
+(async () => {
+  const browser = (navigator.language || "").toLowerCase();
+  const stored = store.get("lang");
+  lang = LANGS.includes(stored) ? stored : browser.startsWith("hu") ? "hu" : browser.startsWith("ro") ? "ro" : "en";
+  readHash(); applyLang();
+  $("count").textContent = t("loading");
+  try {
+    const [placesJson, catalogue] = await Promise.all([fetch("data/places.json"), fetch("data/catalogue.json")].map(async r => {
+      const response = await r; if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json();
+    }));
+    catalogueCounties = catalogue.counties.map(c => c.name);
+    places = placesJson.places.map(([qid, ro, county, other]) => {
+      const all = [ro, ...Object.values(other).flat()];
+      return { qid, ro, county, other, names: new Set(all.map(n => words(n).join(" "))), keys: [...new Set(all.flatMap(n => words(n).map(variantKey)))] };
+    });
+  } catch (error) { $("count").textContent = /HTTP 404/.test(error.message) ? t("notBuilt") : t("error", { e: error.message }); return; }
+  applyLang();
+  run();
+})();
+</script>
+</body>
+</html>

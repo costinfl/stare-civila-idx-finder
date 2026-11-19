@@ -89,7 +89,7 @@
         <h1>Stare Civilă IDX Finder</h1>
         <p data-i18n-html="intro"></p>
       </div>
-      <div class="lang"><a href="about.html" id="about-link" data-i18n="about"></a><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-en" aria-pressed="false">EN</button></div>
+      <div class="lang"><a href="places.html" id="places-link" data-i18n="historical"></a><a href="about.html" id="about-link" data-i18n="about"></a><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-hu" aria-pressed="false">HU</button><button id="lang-en" aria-pressed="false">EN</button></div>
     </div>
   </header>
 
@@ -110,7 +110,7 @@
       </div>
       <div class="meta">
         <span id="n-count" role="status" aria-live="polite"></span>
-        <span class="actions"><label class="check"><input id="n-exact" type="checkbox"> <span data-i18n="exact"></span></label><button id="n-csv" disabled data-i18n="csv"></button></span>
+        <span class="actions"><label class="check"><input id="n-hist" type="checkbox" checked> <span data-i18n="hist"></span></label><label class="check"><input id="n-exact" type="checkbox"> <span data-i18n="exact"></span></label><button id="n-csv" disabled data-i18n="csv"></button></span>
       </div>
       <div class="hint" data-i18n="hintNames"></div>
       <details class="progress" id="progress" hidden>
@@ -165,11 +165,11 @@ const REPO = "https://github.com/costinfl/stare-civila-idx-finder";
 const I18N = {
   ro: {
     intro: 'Căutare în indexurile de nume (<strong>IDX</strong>) atașate registrelor de stare civilă din <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a>. Căutarea rulează integral în browser, pe un index pregătit în prealabil; deschideți registrul pentru a vedea imaginile pe site-ul Arhivelor.',
-    about: "Despre și date personale", tabNames: "Nume", tabRegisters: "Registre",
+    about: "Despre și date personale", historical: "Nume istorice", hist: "Include nume istorice", alsoSearched: " · căutat și: {names}", tabNames: "Nume", tabRegisters: "Registre",
     lblName: "Nume", phName: "ex. Popescu Ion, Schöfer, Kovács", lblPlace: "Localitate", phPlace: "ex. Ploiești",
     lblCounty: "Județ", allCounties: "Toate județele", lblEvent: "Eveniment", evAll: "Toate", evB: "Naștere", evM: "Căsătorie", evD: "Deces",
     lblFrom: "Din anul", lblTo: "Până în anul", exact: "Ortografie exactă", csv: "Descarcă CSV",
-    hintNames: "Fiecare cuvânt se potrivește cu începutul unei părți din nume, fără diacritice. Variantele de scriere uzuale sunt incluse (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru) – bifați „Ortografie exactă” pentru a le exclude. Folosiți cel puțin 3 litere. Puteți căuta și doar după localitate; județul, anii și evenimentul restrâng rezultatele.",
+    hintNames: "Fiecare cuvânt se potrivește cu începutul unei părți din nume, fără diacritice. Variantele de scriere uzuale sunt incluse (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru) – bifați „Ortografie exactă” pentru a le exclude. Folosiți cel puțin 3 litere. Puteți căuta și doar după localitate; sunt incluse și numele istorice ale localității (ex. Salonta – Nagyszalonta). Județul, anii și evenimentul restrâng rezultatele.",
     thCounty: "Județ", thIndexed: "Registre indexate", thNames: "Nume", thLastRun: "Ultima rulare",
     thName: "Nume", thEvent: "Eveniment", thDate: "Data", thPlace: "Localitate", thAct: "Act · pagină", thRegister: "Registru",
     lblQ: "Căutare în titlu sau cotă", phQ: "ex. născuți Ploiești, PH-F-00006-209, decedați 1913",
@@ -196,11 +196,11 @@ const I18N = {
   },
   en: {
     intro: 'Search the <strong>IDX</strong> name indexes attached to civil-status registers in <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a>. Everything runs in your browser from a prebuilt index; open a register to view its scans on the Archives site.',
-    about: "About & privacy", tabNames: "Names", tabRegisters: "Registers",
+    about: "About & privacy", historical: "Historical names", hist: "Include historical names", alsoSearched: " · also searched: {names}", tabNames: "Names", tabRegisters: "Registers",
     lblName: "Name", phName: "e.g. Popescu Ion, Schöfer, Kovács", lblPlace: "Place", phPlace: "e.g. Ploiești",
     lblCounty: "County", allCounties: "All counties", lblEvent: "Event", evAll: "All", evB: "Birth", evM: "Marriage", evD: "Death",
     lblFrom: "From year", lblTo: "To year", exact: "Exact spelling", csv: "Download CSV",
-    hintNames: "Each word matches the start of a name part, ignoring diacritics. Common spelling variants are included (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru); tick “Exact spelling” to leave them out. Use at least 3 letters. You can also search by place alone; county, years and event narrow the results.",
+    hintNames: "Each word matches the start of a name part, ignoring diacritics. Common spelling variants are included (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru); tick “Exact spelling” to leave them out. Use at least 3 letters. You can also search by place alone; the place’s historical names are included (e.g. Salonta – Nagyszalonta). County, years and event narrow the results.",
     thCounty: "County", thIndexed: "Registers indexed", thNames: "Names", thLastRun: "Last crawled",
     thName: "Name", thEvent: "Event", thDate: "Date", thPlace: "Place", thAct: "Act · page", thRegister: "Register",
     lblQ: "Search title or call number", phQ: "e.g. născuți Ploiești, PH-F-00006-209, decedați 1913",
@@ -225,8 +225,43 @@ const I18N = {
     citeRegister: "National Archives of Romania, {county}, “{title}”, call no. {call}, {url} (accessed {today}).",
     untitled: "(untitled)",
   },
+  hu: {
+    intro: 'Keresés a romániai Nemzeti Levéltár <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a> portálján közzétett anyakönyvekhez csatolt névmutatókban (<strong>IDX</strong> fájlok). A keresés teljes egészében a böngészőben fut, egy előre elkészített mutatón; a képek megtekintéséhez nyissa meg az anyakönyvet a Levéltár oldalán.',
+    about: "Névjegy és adatvédelem", historical: "Történelmi nevek", hist: "Történelmi nevekkel", alsoSearched: " · ezekkel is keresve: {names}", tabNames: "Nevek", tabRegisters: "Anyakönyvek",
+    lblName: "Név", phName: "pl. Kovács István, Popescu Ion", lblPlace: "Helység", phPlace: "pl. Nagyszalonta",
+    lblCounty: "Megye", allCounties: "Minden megye", lblEvent: "Esemény", evAll: "Mind", evB: "Születés", evM: "Házasság", evD: "Halálozás",
+    lblFrom: "Évtől", lblTo: "Évig", exact: "Pontos írásmód", csv: "CSV letöltése",
+    hintNames: "Minden szó egy névrész elejére illeszkedik, ékezetektől függetlenül. A gyakori írásváltozatok is szerepelnek (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru) – a „Pontos írásmód” bejelölésével kizárhatók. Legalább 3 betűt használjon. Csak helységre is kereshet; a helység történelmi nevei is szerepelnek (pl. Salonta – Nagyszalonta). A megye, az évek és az esemény szűkítik a találatokat.",
+    thCounty: "Megye", thIndexed: "Feldolgozott anyakönyvek", thNames: "Nevek", thLastRun: "Utolsó futás",
+    thName: "Név", thEvent: "Esemény", thDate: "Dátum", thPlace: "Helység", thAct: "Bejegyzés · oldal", thRegister: "Anyakönyv",
+    lblQ: "Keresés címben vagy jelzetben", phQ: "pl. născuți Ploiești, PH-F-00006-209, decedați 1913",
+    thCall: "Jelzet", thTitle: "Cím", thYears: "Évek", thLevel: "Szint",
+    back: "Vissza a találatokhoz", more: "Továbbiak ({n} maradt)", cite: "Hivatkozás", copied: "Hivatkozás másolva", entries: "Bejegyzések", report: "Hibajelzés",
+    image: "kép", act: "bejegyzés", page: "o.", loadingCat: "Katalógus betöltése…", loadingNames: "Névmutató betöltése…",
+    catError: "A katalógus nem tölthető be ({e}).", noIndex: "A névmutató még nincs közzétéve. Addig használja az Anyakönyvek fület.",
+    idle: "Eddig {entries} név, {total} anyakönyvből {records} feldolgozva. Írjon be egy nevet vagy helységet.",
+    needNameOrPlace: "Írjon be egy nevet vagy helységet; a megye, az évek és az esemény csak szűkítik a találatokat.",
+    minLetters: "Legalább az egyik szóban használjon {n} betűt.",
+    tooCommon: "„{w}” túl gyakori ahhoz, hogy önmagában keressen rá ({mb} MB). Adjon meg családnevet vagy több betűt.",
+    tooManyRegisters: "A helység {n} anyakönyvben szerepel; szűkítsen megyére vagy évekre (legfeljebb {max}).",
+    searching: "Keresés… ({mb} MB)", loadError: "A mutató nem tölthető be ({e}).",
+    noNames: "Nincs találat. Próbáljon kevesebb szót, csak a családnevet, vagy kevesebb szűrőt.",
+    results: "{n} találat · feldolgozva: {records} / {total} anyakönyv",
+    registerView: "{call} anyakönyv: mind a(z) {n} bejegyzés",
+    regCount: "{n} / {total} mutatóval rendelkező anyakönyv", noRegs: "Nincs ilyen anyakönyv. Próbáljon kevesebb szót vagy szélesebb időszakot.",
+    progress: "A mutató állapota: {done} / {total} anyakönyv ({pct}%)", progressTail: " · {names} név · utolsó futás: {date}", failed: "({n} sikertelen)",
+    footer: "{n} mutatóval rendelkező anyakönyv {c} megyéből · a katalógus a Levéltár nyilvános keresőjéből készült ({date}).",
+    attribution: 'Adatok: Románia Nemzeti Levéltára, <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.hu" rel="noopener">CC BY-NC-ND 4.0</a> licenc, változtatás nélkül. Független projekt, nem kapcsolódik a Nemzeti Levéltárhoz. <a href="about.html">Névjegy és adatvédelem</a>.',
+    citeEntry: "{name}{event}{date}. Románia Nemzeti Levéltára, {county}, „{title}”, jelzet: {call}{act}{page}{image}, {url} (megtekintve: {today}).",
+    citeRegister: "Románia Nemzeti Levéltára, {county}, „{title}”, jelzet: {call}, {url} (megtekintve: {today}).",
+    untitled: "(cím nélkül)",
+  },
 };
 const EVENTS = { b: "evB", m: "evM", d: "evD" };
+const HU_COUNTIES = { "Alba": "Fehér", "Bihor": "Bihar", "Bistrița-Năsăud": "Beszterce-Naszód", "Brașov": "Brassó", "Caraș-Severin": "Krassó-Szörény",
+  "Cluj": "Kolozs", "Covasna": "Kovászna", "Harghita": "Hargita", "Hunedoara": "Hunyad", "Maramureș": "Máramaros", "Mureș": "Maros",
+  "Satu Mare": "Szatmár", "Sălaj": "Szilágy", "Sibiu": "Szeben", "Timiș": "Temes", "București": "Bukarest" };
+const LANGS = ["ro", "hu", "en"], LOCALES = { ro: "ro-RO", hu: "hu-HU", en: "en-GB" };
 
 const $ = (id) => document.getElementById(id);
 const PAGE = 200, MAX_DOWNLOAD = 30e6, MAX_REGISTERS = 40;
@@ -234,7 +269,8 @@ let lang = "ro", data, byId = new Map(), names = null;
 
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 function t(key, vars = {}) { return String(I18N[lang][key] ?? I18N.en[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? ""); }
-const fmt = (n) => Number(n).toLocaleString(lang === "ro" ? "ro-RO" : "en-GB");
+const fmt = (n) => Number(n).toLocaleString(LOCALES[lang]);
+function countyName(i) { const name = data.counties[i].name; return lang === "hu" && HU_COUNTIES[name] ? `${name} (${HU_COUNTIES[name]})` : name; }
 const fold = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const words = (s) => fold(s).match(/[a-z]+/g) || [];
 
@@ -291,31 +327,32 @@ function applyLang() {
   for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
   for (const el of document.querySelectorAll("[data-i18n-html]")) el.innerHTML = t(el.dataset.i18nHtml);
   for (const el of document.querySelectorAll("[data-i18n-ph]")) el.placeholder = t(el.dataset.i18nPh);
-  $("lang-ro").setAttribute("aria-pressed", lang === "ro"); $("lang-en").setAttribute("aria-pressed", lang === "en");
+  for (const l of LANGS) $(`lang-${l}`).setAttribute("aria-pressed", lang === l);
   $("about-link").href = `about.html#lang=${lang}`;
+  $("places-link").href = `places.html#lang=${lang}`;
   for (const a of document.querySelectorAll('footer a[href="about.html"]')) a.href = `about.html#lang=${lang}`;
 }
 function setLang(value, rerun = true) {
-  lang = value === "en" ? "en" : "ro"; store.set("lang", lang); applyLang();
+  lang = LANGS.includes(value) ? value : "ro"; store.set("lang", lang); applyLang();
   if (data) { renderFooter(); fillCountySelects(); if (names) renderProgress(); }
   if (rerun) { writeHash(); runRegisters(); runNames(); }
 }
-$("lang-ro").onclick = () => setLang("ro");
-$("lang-en").onclick = () => setLang("en");
+for (const l of LANGS) $(`lang-${l}`).onclick = () => setLang(l);
 
 /* ---------- tabs and URL state ---------- */
-const FIELDS = { names: ["n-q", "n-place", "n-county", "n-event", "n-from", "n-to", "n-exact"], registers: ["q", "county", "from", "to"] };
+const FIELDS = { names: ["n-q", "n-place", "n-county", "n-event", "n-from", "n-to", "n-exact", "n-hist"], registers: ["q", "county", "from", "to"] };
 let tab = "names", browseId = null;
 function showTab(name, push = true) {
   tab = name;
   for (const x of ["names", "registers"]) { $(`tab-${x}`).setAttribute("aria-selected", x === name); $(`view-${x}`).hidden = x !== name; }
   if (push) writeHash();
 }
-const getField = (id) => $(id).type === "checkbox" ? ($(id).checked ? "1" : "") : $(id).value;
-const setField = (id, v) => { if ($(id).type === "checkbox") $(id).checked = v === "1"; else $(id).value = v || ""; };
+const DEFAULT_ON = new Set(["n-hist"]);  // checkboxes that are on unless the URL says "0"
+const getField = (id) => $(id).type !== "checkbox" ? $(id).value : DEFAULT_ON.has(id) ? ($(id).checked ? "" : "0") : ($(id).checked ? "1" : "");
+const setField = (id, v) => { if ($(id).type !== "checkbox") $(id).value = v || ""; else $(id).checked = DEFAULT_ON.has(id) ? v !== "0" : v === "1"; };
 function readHash() {
   const p = new URLSearchParams(location.hash.slice(1));
-  if (p.get("lang")) lang = p.get("lang") === "en" ? "en" : "ro";
+  if (LANGS.includes(p.get("lang"))) lang = p.get("lang");
   showTab(p.get("tab") === "registers" ? "registers" : "names", false);
   for (const id of [...FIELDS.names, ...FIELDS.registers]) setField(id, p.get(id));
   browseId = Number(p.get("reg")) || null;
@@ -346,7 +383,7 @@ function fillCountySelects() {
   for (const select of [$("county"), $("n-county")]) {
     const value = select.value;
     select.replaceChildren(new Option(t("allCounties"), ""));
-    data.counties.forEach((county, i) => select.append(new Option(`${county.name} (${fmt(county.count)})`, i)));
+    data.counties.forEach((county, i) => select.append(new Option(`${countyName(i)} · ${fmt(county.count)}`, i)));
     select.value = value;
   }
 }
@@ -354,7 +391,7 @@ function renderFooter() {
   $("footer").textContent = t("footer", { n: fmt(data.rows.length), c: data.counties.length, date: data.generated_at.slice(0, 10) });
 }
 function citeRegister(item) {
-  return t("citeRegister", { county: data.counties[item.c].name, title: item.title || t("untitled"), call: item.call, url: recordUrl(item.id), today: today() });
+  return t("citeRegister", { county: countyName(item.c), title: item.title || t("untitled"), call: item.call, url: recordUrl(item.id), today: today() });
 }
 function runRegisters() {
   if (!data) return;
@@ -377,7 +414,7 @@ function moreRegisters() {
   if (!regMatches.length) { const c = body.insertRow().insertCell(); c.colSpan = 6; c.className = "empty"; c.textContent = t("noRegs"); }
   for (const item of regMatches.slice(regShown, regShown + PAGE)) {
     const r = body.insertRow();
-    r.insertCell().textContent = data.counties[item.c].name;
+    r.insertCell().textContent = countyName(item.c);
     const call = r.insertCell(); call.className = "call"; highlight(call, item.call, terms);
     const a = link(recordUrl(item.id), ""); highlight(a, item.title || t("untitled"), terms); r.insertCell().append(a);
     const y = r.insertCell(); y.className = "nowrap"; y.textContent = item.years;
@@ -429,24 +466,57 @@ function renderProgress() {
   const progress = names.progress || {}, total = data.items.length, pct = (n, d) => d ? 100 * n / d : 0;
   const latest = Object.values(progress).map(p => p.last_run).sort().pop();
   const strong = document.createElement("strong");
-  strong.textContent = t("progress", { done: fmt(names.records), total: fmt(total), pct: pct(names.records, total).toFixed(1) });
+  strong.textContent = t("progress", { done: fmt(names.records), total: fmt(total), pct: pct(names.records, total).toLocaleString(LOCALES[lang], { minimumFractionDigits: 1, maximumFractionDigits: 1 }) });
   $("progress-summary").replaceChildren(strong, t("progressTail", { names: fmt(names.entries), date: runDate(latest) || "—" }));
   $("progress-bar").style.width = `${pct(names.records, total)}%`;
   const body = $("progress-rows"); body.replaceChildren();
-  for (const county of data.counties) {
+  data.counties.forEach((county, i) => {
     const p = progress[county.prefix.replace(/-$/, "")] || { done: 0, entries: 0, errors: 0 };
     const r = body.insertRow();
-    r.insertCell().textContent = county.name;
+    r.insertCell().textContent = countyName(i);
     const done = r.insertCell(); done.className = "num";
     done.textContent = `${fmt(p.done)} / ${fmt(county.count)}${p.errors ? ` ${t("failed", { n: fmt(p.errors) })}` : ""}`;
     const bar = document.createElement("div"); bar.className = "bar small";
     const fill = document.createElement("span"); fill.style.width = `${pct(p.done, county.count)}%`; bar.append(fill); r.insertCell().append(bar);
     const n = r.insertCell(); n.className = "num"; n.textContent = fmt(p.entries);
     r.insertCell().textContent = runDate(p.last_run);
-  }
+  });
   $("progress").hidden = false;
 }
 function queryKeys(text) { return [...new Set(words(text).map(variantKey))]; }
+let placesData = null, currentPlaceKeys = [];
+async function loadPlaces() {
+  if (!placesData) placesData = (async () => {
+    const response = await fetch("data/places.json");
+    if (!response.ok) throw new Error(`places.json: HTTP ${response.status}`);
+    const json = await response.json(), byName = new Map();
+    for (const [qid, ro, county, other] of json.places) {
+      const all = [ro, ...Object.values(other).flat()];
+      for (const n of all) {
+        const key = words(n).join(" ");
+        if (!key) continue;
+        if (!byName.has(key)) byName.set(key, []);
+        byName.get(key).push({ qid, ro, county, all });
+      }
+    }
+    return byName;
+  })();
+  return placesData;
+}
+async function placeAlternatives(text, f) {
+  // Every name (in Latin script) of the settlements whose name matches the whole place query.
+  const query = words(text).join(" ");
+  if (!query || !$("n-hist").checked) return [];
+  let byName;
+  try { byName = await loadPlaces(); } catch { return []; }
+  const county = f.county === null ? null : data.counties[f.county].name;
+  const names = new Map();
+  for (const place of byName.get(query) || []) {
+    if (county && place.county !== county) continue;
+    for (const n of place.all) { const key = words(n).join(" "); if (key && key !== query && !names.has(key)) names.set(key, n); }
+  }
+  return [...names.values()];
+}
 function matchesWords(text, keys, exactWords) {
   const parts = words(text), partKeys = parts.map(variantKey);
   return keys.every((k, i) => partKeys.some((pk, j) => pk.startsWith(k) && (!exactWords || parts[j].startsWith(exactWords[i]))));
@@ -509,6 +579,12 @@ async function runNames() {
   const nameKeys = nameWords.map(variantKey), placeKeys = placeWords.map(variantKey);
   const f = filters();
   $("n-rows").replaceChildren(); $("n-more").hidden = true; $("n-csv").disabled = true; $("n-banner").hidden = true; nameMatches = [];
+  const alternatives = placeWords.length ? await placeAlternatives($("n-place").value, f) : [];
+  if (run !== nameRun) return;
+  // Each alternative: [variant keys, exact words]; the first is the query itself.
+  const placeAlts = [[placeKeys, exact ? placeWords : null], ...alternatives.map(n => [words(n).map(variantKey), exact ? words(n) : null])];
+  currentPlaceKeys = [...new Set(placeAlts.flatMap(a => a[0]))];
+  const also = alternatives.length ? t("alsoSearched", { names: alternatives.join(", ") }) : "";
 
   let rows;
   try {
@@ -519,6 +595,7 @@ async function runNames() {
       $("n-banner").hidden = false;
       $("n-banner-text").textContent = t("registerView", { n: fmt(rows.length), call: reg ? reg.call : browseId });
       nameMatches = rows.slice();
+      currentPlaceKeys = [];
       return finishNames(nameMatches.length ? null : "noNames");
     }
     const usableNames = nameKeys.filter(k => k.length >= names.min_token);
@@ -538,7 +615,12 @@ async function runNames() {
       setStatus("searching", { mb: (best.bytes / 1e6).toFixed(1) });
       rows = (await Promise.all(best.keys.map(k => fetchGz(`n/${k}.gz`)))).flat();
     } else {
-      const rids = await placeRegisters(usablePlaces, f);
+      const found = new Set();
+      for (const [keys] of placeAlts) {
+        const usable = keys.filter(k => k.length >= names.min_token);
+        if (usable.length) for (const rid of await placeRegisters(usable, f)) found.add(rid);
+      }
+      const rids = [...found];
       if (run !== nameRun) return;
       if (rids.length > MAX_REGISTERS) return setStatus("tooManyRegisters", { n: fmt(rids.length), max: MAX_REGISTERS });
       setStatus("searching", { mb: (rids.length * 0.03).toFixed(1) });
@@ -547,23 +629,24 @@ async function runNames() {
   } catch (error) { if (run === nameRun) setStatus("loadError", { e: error.message }); return; }
   if (run !== nameRun) return;
 
-  const nameExact = exact ? nameWords : null, placeExact = exact ? placeWords : null;
+  const nameExact = exact ? nameWords : null;
   const seen = new Set();
   for (const row of rows) {
     const key = `${row[0]}|${row[1]}|${row[4]}|${row[6]}|${row[8]}`;
     if (seen.has(key)) continue;
     if (nameKeys.length && !matchesWords(row[1], nameKeys, nameExact)) continue;
-    if (placeKeys.length && !matchesWords(row[2], placeKeys, placeExact)) continue;
+    if (placeKeys.length && !placeAlts.some(([keys, exactWords]) => keys.length && matchesWords(row[2], keys, exactWords))) continue;
     if (!passesFilters(row, f)) continue;
     seen.add(key); nameMatches.push(row);
   }
   const sortKey = (row) => row[9] || String(byId.get(row[0])?.y0 || "9999");  // undated: register's first year, else last
   nameMatches.sort((a, b) => sortKey(a).localeCompare(sortKey(b)) || a[1].localeCompare(b[1], "ro"));
-  finishNames(nameMatches.length ? null : "noNames");
+  finishNames(nameMatches.length ? null : "noNames", also);
 }
-function finishNames(emptyKey) {
+function finishNames(emptyKey, suffix = "") {
   nameShown = 0; $("n-rows").replaceChildren(); moreNames(emptyKey);
   setStatus("results", { n: fmt(nameMatches.length), records: fmt(names.records), total: fmt(data.items.length) });
+  if (suffix) $("n-count").textContent += suffix;
   $("n-csv").disabled = !nameMatches.length;
 }
 function shownDate(row) { const date = row[4], year = row[5]; return date && !date.startsWith("#") ? date : (year || date); }
@@ -572,7 +655,7 @@ function citeEntry(row) {
   const reg = byId.get(row[0]);
   return t("citeEntry", {
     name: row[1], event: eventLabel(row) ? `, ${eventLabel(row)}` : "", date: shownDate(row) ? ` ${shownDate(row)}` : "",
-    county: reg ? data.counties[reg.c].name : "", title: reg ? reg.title || t("untitled") : "", call: reg ? reg.call : row[0],
+    county: reg ? countyName(reg.c) : "", title: reg ? reg.title || t("untitled") : "", call: reg ? reg.call : row[0],
     act: row[6] ? `, ${t("act")} ${row[6]}` : "", page: row[7] ? `, ${t("page")} ${row[7]}` : "", image: row[8] ? `, ${t("image")} ${row[8]}` : "",
     url: recordUrl(row[0]), today: today(),
   });
@@ -584,7 +667,7 @@ function reportUrl(row) {
   return `${REPO}/issues/new?${p}`;
 }
 function moreNames(emptyKey) {
-  const nameKeys = queryKeys($("n-q").value), placeKeys = queryKeys($("n-place").value);
+  const nameKeys = queryKeys($("n-q").value), placeKeys = currentPlaceKeys;
   const body = $("n-rows");
   if (emptyKey && !nameMatches.length) { const c = body.insertRow().insertCell(); c.colSpan = 7; c.className = "empty"; c.textContent = t(emptyKey); }
   for (const row of nameMatches.slice(nameShown, nameShown + PAGE)) {
@@ -600,7 +683,7 @@ function moreNames(emptyKey) {
     if (image) { const s = document.createElement("div"); s.className = "sub"; s.textContent = image; ap.append(s); }
     const rc = r.insertCell();
     rc.append(link(recordUrl(id), reg ? reg.call : `#${id}`));
-    if (reg) { const s = document.createElement("div"); s.className = "sub"; s.textContent = `${data.counties[reg.c].name} · ${reg.years}`; rc.append(s); }
+    if (reg) { const s = document.createElement("div"); s.className = "sub"; s.textContent = `${countyName(reg.c)} · ${reg.years}`; rc.append(s); }
     const tools = r.insertCell(); tools.className = "tools";
     tools.append(button(t("cite"), () => copy(citeEntry(row))));
     if (!browseId) tools.append(button(t("entries"), () => openRegister(id)));
@@ -619,13 +702,14 @@ $("n-csv").onclick = () => csv("stare-civila-names.csv", [["name", "place", "eve
 /* ---------- wiring ---------- */
 function debounce(fn) { let timer; return () => { clearTimeout(timer); timer = setTimeout(fn, 250); }; }
 const nameInput = debounce(() => { browseId = null; runNames(); }), regInput = debounce(runRegisters);
-for (const id of FIELDS.names) $(id).addEventListener(id === "n-exact" ? "change" : "input", nameInput);
+for (const id of FIELDS.names) $(id).addEventListener($(id).type === "checkbox" ? "change" : "input", nameInput);
 for (const id of FIELDS.registers) $(id).addEventListener("input", regInput);
 window.addEventListener("hashchange", () => { readHash(); applyLang(); tab === "names" ? runNames() : runRegisters(); });
 
 (async () => {
   const stored = store.get("lang");
-  lang = stored || ((navigator.language || "").toLowerCase().startsWith("ro") ? "ro" : "en");
+  const browser = (navigator.language || "").toLowerCase();
+  lang = LANGS.includes(stored) ? stored : browser.startsWith("hu") ? "hu" : browser.startsWith("ro") ? "ro" : "en";
   readHash();
   applyLang();
   $("n-count").textContent = t("loadingCat");
