@@ -23,7 +23,7 @@ The code is CC0; the data belongs to the National Archives of Romania and is use
 
 ### Languages and historical place names
 
-The site is available in Romanian, Hungarian and English (switch in the header; Hungarian also shows counties as e.g. “Bihor (Bihar)”). `places_build.py` builds `site/data/places.json` — Hungarian, German and other historical names of ~17,000 Romanian settlements from Wikidata (CC0) — used by the **Historical names** page (`site/places.html`) and by the Names-tab place search, which by default also searches a settlement's other names (Salonta ↔ Nagyszalonta). It is refreshed by the monthly *Refresh catalogue* workflow.
+The site is available in Romanian, Hungarian and English (switch in the header; Hungarian also shows counties as e.g. “Bihor (Bihar)”). `places_build.py` builds `site/data/places.json` — Hungarian, German and other historical names of ~17,000 Romanian settlements from Wikidata (CC0) — used by the **Historical names** page (`site/places.html`) and by the Names-tab place search, which by default also searches a settlement's other names (Salonta ↔ Nagyszalonta). It is built by the *Build place names* workflow (monthly and on demand).
 
 ### Name index
 

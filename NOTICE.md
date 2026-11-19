@@ -21,7 +21,8 @@ which distributes it under
 **Historical place names** (`site/data/places.json`, built by
 `places_build.py`) come from [Wikidata](https://www.wikidata.org/), CC0
 (queried through the QLever SPARQL endpoint). Wrong or missing names are best
-corrected on Wikidata itself; the file is rebuilt monthly.
+corrected on Wikidata itself; the *Build place names* workflow rebuilds the
+file monthly.
 
 Privacy: entries from the last 100 years are not published, and records or
 entries listed in [`privacy/exclusions.json`](privacy/exclusions.json) are

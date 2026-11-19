@@ -466,7 +466,7 @@ function renderProgress() {
   const progress = names.progress || {}, total = data.items.length, pct = (n, d) => d ? 100 * n / d : 0;
   const latest = Object.values(progress).map(p => p.last_run).sort().pop();
   const strong = document.createElement("strong");
-  strong.textContent = t("progress", { done: fmt(names.records), total: fmt(total), pct: pct(names.records, total).toFixed(1) });
+  strong.textContent = t("progress", { done: fmt(names.records), total: fmt(total), pct: pct(names.records, total).toLocaleString(LOCALES[lang], { minimumFractionDigits: 1, maximumFractionDigits: 1 }) });
   $("progress-summary").replaceChildren(strong, t("progressTail", { names: fmt(names.entries), date: runDate(latest) || "—" }));
   $("progress-bar").style.width = `${pct(names.records, total)}%`;
   const body = $("progress-rows"); body.replaceChildren();

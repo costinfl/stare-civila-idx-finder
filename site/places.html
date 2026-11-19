@@ -32,7 +32,8 @@
     td.tools { white-space:nowrap; font-size:12.5px; }
     td.tools > * + * { margin-left:10px; }
     .tag { display:inline-block; font-size:10.5px; font-weight:650; color:var(--muted); border:1px solid var(--line); border-radius:4px; padding:0 4px; margin-right:4px; vertical-align:1px; }
-    .other span.n { margin-right:10px; display:inline-block; }
+    span.n { margin-right:10px; display:inline-block; }
+    td.ro span.n + span.n { font-weight:400; color:var(--muted); }
     a { color:var(--blue); }
     mark { background:var(--mark); color:inherit; border-radius:2px; }
     .empty { color:var(--muted); padding:18px 4px; }
@@ -87,6 +88,7 @@ const I18N = {
     lblQ: "Caută o localitate (în orice limbă)", phQ: "ex. Nagyszalonta, Hermannstadt, Salonta", lblCounty: "Județ", allCounties: "Toate județele",
     thRo: "Nume românesc", thCounty: "Județ", thOther: "Alte nume",
     count: "{n} localități", countFiltered: "{n} din {total} localități", search: "Caută în registre", wikidata: "Wikidata",
+    notBuilt: "Lista de nume istorice nu a fost încă generată; reveniți în curând.",
     more: "Mai multe ({n} rămase)", none: "Nicio localitate găsită.", loading: "Se încarcă…", error: "Datele nu au putut fi încărcate ({e}).",
     footer: 'Nume: <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), actualizate lunar. O formă lipsă sau greșită se corectează direct în Wikidata (linkul de pe fiecare rând) sau <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new" rel="noopener">semnalând-o aici</a>.',
   },
@@ -96,6 +98,7 @@ const I18N = {
     lblQ: "Helység keresése (bármely nyelven)", phQ: "pl. Nagyszalonta, Hermannstadt, Salonta", lblCounty: "Megye", allCounties: "Minden megye",
     thRo: "Román név", thCounty: "Megye", thOther: "Egyéb nevek",
     count: "{n} helység", countFiltered: "{n} / {total} helység", search: "Keresés az anyakönyvekben", wikidata: "Wikidata",
+    notBuilt: "A történelmi nevek listája még nem készült el; nézzen vissza hamarosan.",
     more: "Továbbiak ({n} maradt)", none: "Nincs ilyen helység.", loading: "Betöltés…", error: "Az adatok nem tölthetők be ({e}).",
     footer: 'Nevek: <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), havonta frissítve. A hiányzó vagy hibás névalak közvetlenül a Wikidatán javítható (a sorokban lévő hivatkozással), vagy <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new" rel="noopener">jelezheti itt</a>.',
   },
@@ -105,6 +108,7 @@ const I18N = {
     lblQ: "Find a place (in any language)", phQ: "e.g. Nagyszalonta, Hermannstadt, Salonta", lblCounty: "County", allCounties: "All counties",
     thRo: "Romanian name", thCounty: "County", thOther: "Other names",
     count: "{n} places", countFiltered: "{n} of {total} places", search: "Search registers", wikidata: "Wikidata",
+    notBuilt: "The historical names list has not been built yet; please check back soon.",
     more: "Show more ({n} left)", none: "No places found.", loading: "Loading…", error: "Could not load the data ({e}).",
     footer: 'Names: <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), refreshed monthly. A missing or wrong form can be fixed directly on Wikidata (link on each row) or <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new" rel="noopener">reported here</a>.',
   },
@@ -220,7 +224,7 @@ window.addEventListener("hashchange", () => { readHash(); applyLang(); run(); })
       const all = [ro, ...Object.values(other).flat()];
       return { qid, ro, county, other, names: new Set(all.map(n => words(n).join(" "))), keys: [...new Set(all.flatMap(n => words(n).map(variantKey)))] };
     });
-  } catch (error) { $("count").textContent = t("error", { e: error.message }); return; }
+  } catch (error) { $("count").textContent = /HTTP 404/.test(error.message) ? t("notBuilt") : t("error", { e: error.message }); return; }
   applyLang();
   run();
 })();

@@ -6,7 +6,7 @@ on:
     paths: ["site/**", "names_export.py", "privacy/**", ".github/workflows/pages.yml"]
   # Commits pushed by the refresh workflow's token don't fire push events.
   workflow_run:
-    workflows: ["Refresh catalogue", "Crawl IDX names"]
+    workflows: ["Refresh catalogue", "Crawl IDX names", "Build place names"]
     types: [completed]
   workflow_dispatch:
 
