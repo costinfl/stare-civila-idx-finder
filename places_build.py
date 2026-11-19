@@ -18,6 +18,7 @@ Output: {"generated_at", "source", "languages", "places": [[qid, ro_name, county
 from __future__ import annotations
 
 import json
+import re
 import time
 import unicodedata
 import urllib.parse
@@ -48,6 +49,40 @@ BUCHAREST = "Q19660"
 def fold(text: str) -> str:
     text = unicodedata.normalize("NFD", text)
     return "".join(c for c in text if unicodedata.category(c) != "Mn").casefold().strip()
+
+
+# Attribution order when Wikidata files a name under several languages (aliases are
+# often copied across languages): Hungarian and German first, Romanian last.
+PRIORITY = ["hu", "de", "la", "sk", "cs", "sr", "sh", "hr", "pl", "uk", "rue", "bg", "tr", "crh", "tt", "yi", "he", "el", "hy", "rmy", "ro"]
+NOISE = ("opstina", "gmina", "comuna ", "municipiul", "orasul ", "okreg", "district", "county", "kreis ", "kozseg", "megye")
+GERMAN = re.compile(r"(ß|ä|stadt|burg|dorf|berg|markt|feld|hausen|kirch|wald|bach|heim|au$)", re.I)
+
+
+def squash(name: str) -> str:
+    return "".join(c for c in fold(name) if c.isalnum())
+
+
+def same_name(a: str, b: str) -> bool:
+    return squash(a) == squash(b)
+
+
+def is_clean(name: str) -> bool:
+    """Latin script, no disambiguation (parentheses, commas) or administrative words."""
+    if any(c in name for c in "(),/") or not name.strip() or re.fullmatch(r"[A-Z0-9-]+", name):
+        return False
+    if any(unicodedata.category(c).startswith("L") and "LATIN" not in unicodedata.name(c, "") for c in name):
+        return False
+    folded = fold(name) + " "
+    return not any(word in folded for word in NOISE)
+
+
+def labels_query() -> str:
+    langs = ", ".join(f'"{lang}"' for lang in LANGUAGES)
+    return f"""SELECT ?item ?label WHERE {{
+  VALUES ?cls {{ {CLASSES} }}
+  ?item wdt:P31 ?cls ; wdt:P17 wd:Q218 ; rdfs:label ?label .
+  FILTER(LANG(?label) IN ({langs}))
+}}"""
 
 
 def sparql(query: str) -> list[dict]:
@@ -123,21 +158,48 @@ def main() -> None:
         found = collect(rows, county_names)
         items.update(found)
         print(f"{name}: {len(found)} items{' (cached)' if from_cache else ''}", flush=True)
+    # Official labels (not aliases) per item and language: the Romanian label is
+    # the place's name, and a name is attributed to the language it labels.
+    labels_file = CACHE / "_labels.json"
+    if labels_file.exists():
+        label_rows = json.loads(labels_file.read_text(encoding="utf-8"))
+    else:
+        time.sleep(PAUSE)
+        label_rows = sparql(labels_query())
+        labels_file.write_text(json.dumps(label_rows, ensure_ascii=False), encoding="utf-8")
+    labels: dict[str, dict[str, str]] = {}
+    for row in label_rows:
+        labels.setdefault(row["item"]["value"].rsplit("/", 1)[-1], {})[row["label"]["xml:lang"]] = row["label"]["value"].strip()
+
     places: dict[tuple[str, str], dict] = {}
     for (item_id, county), item in items.items():
-        ro_names = sorted(item["names"].get("ro", set()), key=lambda n: (len(n), n))
-        if not ro_names:
+        ro = labels.get(item_id, {}).get("ro")
+        if not ro or not is_clean(ro):
             continue
-        # The shortest Romanian label is the name; other Romanian forms are aliases.
-        ro = ro_names[0]
         entry = places.setdefault((county, ro), {"qid": item_id, "names": {}})
-        for lang, names in item["names"].items():
-            for name in names:
-                if fold(name) != fold(ro):
-                    entry["names"].setdefault(lang, set()).add(name)
+        label_lang = {name: lang for lang, name in labels.get(item_id, {}).items() if lang != "ro"}
+        all_names = {name for names in item["names"].values() for name in names}
+        for name in all_names:
+            if not is_clean(name) or same_name(name, ro):
+                continue
+            langs = {lang for lang, names in item["names"].items() if name in names}
+            # Prefer the language whose official label this is, else the priority order.
+            lang = label_lang.get(name)
+            if not lang and "de" in langs and GERMAN.search(fold(name)):
+                lang = "de"  # e.g. Kronstadt, Neumarkt: also filed under hu by Wikidata
+            lang = lang or next(l for l in PRIORITY if l in langs)
+            entry["names"].setdefault(lang, set()).add(name)
+        # Drop a name kept in two languages after merging items (keep the higher-priority one).
+        seen: set[str] = set()
+        for lang in PRIORITY:
+            for name in sorted(entry["names"].get(lang, set())):
+                key = squash(name)
+                if key in seen:
+                    entry["names"][lang].discard(name)
+                seen.add(key)
     rows = []
     for (county, ro), entry in sorted(places.items(), key=lambda x: (x[0][0], fold(x[0][1]))):
-        names = {lang: sorted(v) for lang in LANGUAGES if (v := entry["names"].get(lang))}
+        names = {lang: sorted(v) for lang in PRIORITY if (v := entry["names"].get(lang))}
         rows.append([entry["qid"], ro, county, names])
     OUT.write_text(json.dumps({
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -145,7 +207,7 @@ def main() -> None:
         "languages": LANGUAGES,
         "places": rows,
     }, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    with_names = sum(1 for r in rows if r[3])
+    with_names = sum(1 for r in rows if r[3])  # noqa: E501
     print(f"{len(rows)} places ({with_names} with other names) -> {OUT.relative_to(ROOT)} ({OUT.stat().st_size / 1e6:.1f} MB)")
 
 
