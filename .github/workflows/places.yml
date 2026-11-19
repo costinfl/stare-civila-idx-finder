@@ -2,7 +2,8 @@ name: Build place names
 
 # Rebuilds site/data/places.json — Hungarian, German and other historical
 # names of Romanian settlements — from Wikidata (CC0) via a public SPARQL
-# endpoint (two queries). Monthly and on demand; commits only when changed,
+# endpoint (one query per county, a minute apart). Monthly and on demand;
+# commits only when changed,
 # and the Pages deploy follows via workflow_run.
 on:
   schedule:
@@ -19,7 +20,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90  # ~43 queries, one a minute while Wikidata limits clients
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

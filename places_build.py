@@ -9,7 +9,7 @@ only repeat the Romanian name (ignoring diacritics) are dropped; Romanian
 aliases are kept as older spellings. Entries with the same Romanian name in the
 same county are merged (a city is often both a municipality and a locality).
 
-    python places_build.py            # ~43 small queries, a few seconds apart
+    python places_build.py            # ~43 small queries, one a minute (~45 min)
 
 Output: {"generated_at", "source", "languages", "places": [[qid, ro_name, county, {lang: [names]}], ...]}
 """
@@ -30,7 +30,7 @@ OUT = ROOT / "site" / "data" / "places.json"
 # The classic query.wikidata.org may be rate-limited during incidents; the
 # main-graph endpoint and QLever serve the same Wikidata data.
 ENDPOINTS = ["https://query-main.wikidata.org/sparql", "https://qlever.dev/api/wikidata"]
-PAUSE = 5  # seconds between queries
+PAUSE = 65  # seconds between queries: WDQS may allow only 1 request a minute during incidents
 PREFIXES = """PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -61,7 +61,7 @@ def sparql(query: str) -> list[dict]:
             except Exception as error:
                 last_error = error
                 print(f"  {endpoint.split('/')[2]}: {error}", flush=True)
-        time.sleep(60 * (attempt + 1))
+        time.sleep(65 * (attempt + 1))
     raise RuntimeError(f"every SPARQL endpoint failed: {last_error}")
 
 
