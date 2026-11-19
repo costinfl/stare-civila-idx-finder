@@ -3,8 +3,11 @@ name: Crawl IDX names
 # Fetches IDX PDFs politely (one request every 1.25 s, shared by every
 # request the crawler makes) and stores the extracted names on the
 # names-data branch. Each run works ~5 h in 55-minute chunks, committing
-# after each, and resumes where the previous run stopped. Once every
-# register is done the runs finish within a minute.
+# after each, and resumes where the previous run stopped. When a run made
+# progress and registers remain, it dispatches the next run itself (the
+# concurrency group queues it until this one ends); the schedule is only a
+# backup, since GitHub's cron can be delayed or skipped. Once every register
+# is done, runs finish within a minute and stop chaining.
 on:
   schedule:
     - cron: "23 */6 * * *"
@@ -16,6 +19,7 @@ on:
 
 permissions:
   contents: write
+  actions: write  # to dispatch the next run
 
 concurrency:
   group: names-crawl
@@ -37,10 +41,12 @@ jobs:
       - name: Install pdftotext
         run: sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
       - name: Crawl in chunks
+        id: crawl
         working-directory: .
         run: |
           git -C names-data config user.name "github-actions[bot]"
           git -C names-data config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          echo "started=$(date -u +%Y%m%dT%H%M%SZ)" >> "$GITHUB_OUTPUT"
           for chunk in $(seq 1 "${{ inputs.chunks || 5 }}"); do
             python names.py --store names-data/names --max-minutes 55 | tail -n 3
             git -C names-data add names
@@ -51,8 +57,25 @@ jobs:
             summary=$(python names.py --store names-data/names --stats | tail -n 1)
             git -C names-data commit -q -m "Crawl names: ${summary//  / }"
             git -C names-data push -q origin HEAD:names-data
+            echo "progressed=true" >> "$GITHUB_OUTPUT"
           done
           python names.py --store names-data/names --stats
+      - name: Start the next run if registers remain
+        if: success() && steps.crawl.outputs.progressed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          read -r done all < <(python names.py --store names-data/names --stats | tail -n 1 | awk '{split($2, a, "/"); print a[1], a[2]}')
+          echo "$done of $all registers stored"
+          # Stop chaining if most of this run's registers failed (e.g. the archive is blocking us).
+          read -r fetched failed < <(python -c "import json, pathlib, sys; lines = [l for p in pathlib.Path('names-data/names').glob('*/*.jsonl') if p.stem >= sys.argv[1] for l in p.read_text(encoding='utf-8').splitlines() if l.strip()]; print(len(lines), sum('\"error\"' in l for l in lines))" "${{ steps.crawl.outputs.started }}")
+          echo "This run: $fetched registers, $failed failed"
+          if [ "$failed" -gt $((fetched / 2)) ]; then
+            echo "::warning::More than half of this run's registers failed; not starting another run."
+          elif [ "$done" -lt "$all" ]; then
+            gh workflow run names-crawl.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f chunks="${{ inputs.chunks || 5 }}"
+            echo "Dispatched the next run."
+          fi
       - name: Progress summary
         if: always()
         run: |
