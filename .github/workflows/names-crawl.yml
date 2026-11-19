@@ -6,8 +6,9 @@ name: Crawl IDX names
 # after each, and resumes where the previous run stopped. When a run made
 # progress and registers remain, it dispatches the next run itself (the
 # concurrency group queues it until this one ends); the schedule is only a
-# backup, since GitHub's cron can be delayed or skipped. Once every register
-# is done, runs finish within a minute and stop chaining.
+# backup, since GitHub's cron can be delayed or skipped. After each chunk's
+# commit it also starts a Pages deploy, so the site lags by at most a chunk.
+# Once every register is done, runs finish within a minute and stop chaining.
 on:
   schedule:
     - cron: "23 */6 * * *"
@@ -43,6 +44,8 @@ jobs:
       - name: Crawl in chunks
         id: crawl
         working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git -C names-data config user.name "github-actions[bot]"
           git -C names-data config user.email "41898299+github-actions[bot]@users.noreply.github.com"
@@ -58,6 +61,9 @@ jobs:
             git -C names-data commit -q -m "Crawl names: ${summary//  / }"
             git -C names-data push -q origin HEAD:names-data
             echo "progressed=true" >> "$GITHUB_OUTPUT"
+            # Refresh the site now rather than at the end of the run. A deploy
+            # failing to start must not stop the crawl.
+            gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" || echo "::warning::Could not start a Pages deploy"
           done
           python names.py --store names-data/names --stats
       - name: Start the next run if registers remain
