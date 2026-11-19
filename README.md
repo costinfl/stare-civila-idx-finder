@@ -17,12 +17,16 @@ python crawl.py --export     # rebuild site/data from idx_store/ only
 
 `idx_store/` (git-ignored) holds the per-county listings so an interrupted crawl resumes. The **Refresh catalogue** workflow re-runs the crawl on demand and commits the new catalogue; **Deploy site to GitHub Pages** publishes `site/` on every change to `main`. One-time setup: *Settings → Pages → Build and deployment → Source: GitHub Actions*.
 
+### Licensing, attribution and privacy
+
+The code is CC0; the data belongs to the National Archives of Romania and is used under their [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) licence — see [NOTICE.md](NOTICE.md) and the site's **About** page (`site/about.html`). Values are shown exactly as in the IDX files; normalised forms are used only for searching, sorting and filtering. Entries from the last 100 years are not published (`names_export.py --privacy-years`), pages carry `noindex`, and removal requests (GitHub issue form) are applied through [`privacy/exclusions.json`](privacy/exclusions.json) at every deploy.
+
 ### Name index
 
 The site's **Names** tab searches the entries inside the IDX PDFs (name, place, event, date, act, register page, image number). It is built in two steps:
 
 1. `names.py` opens each catalogue record's page, downloads its IDX PDF(s) and extracts the table with `idxparse.py`, which reads word positions from poppler's `pdftotext -tsv` (install `poppler-utils`, or poppler on Windows). Each run appends `<store>/<county>/<run>.jsonl` and resumes from what is already stored. At two or more requests per register, the ~47,600 registers take roughly three to four days of continuous, paced crawling.
-2. `names_export.py` turns the store into gzip shards keyed by name-token prefix (`site/data/names/`, git-ignored). A search downloads only the shard(s) for its rarest word.
+2. `names_export.py` turns the store into gzip files under `site/data/names/` (git-ignored): name shards keyed by spelling-variant prefix (`n/`), a place index (`p/`) and one file per register (`r/`). A name search downloads only the shard(s) for its rarest word; a place-only search loads the matching registers. The spelling-variant rules exist in Python and JavaScript; `python tests/test_variants.py` and `node tests/variants.test.mjs` check they agree.
 
 The **Crawl IDX names** workflow runs every 6 hours for about 5 hours, committing progress to the `names-data` branch after each 55-minute chunk; each Pages deploy rebuilds the shards from that branch, so the Names tab grows as the crawl advances.
 

@@ -1,8 +1,10 @@
 name: Refresh catalogue
 
-# Manual only: re-runs the polite listing crawl (~500 requests, one every
+# Monthly and on demand: re-runs the polite listing crawl (~500 requests, one every
 # 1.25 s) and commits the updated site/data/catalogue.json.
 on:
+  schedule:
+    - cron: "41 3 2 * *"  # monthly, to pick up newly uploaded IDX files
   workflow_dispatch:
 
 permissions:

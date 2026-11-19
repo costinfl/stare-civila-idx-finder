@@ -1,0 +1,29 @@
+name: Cerere de eliminare / Removal request
+description: Cereți eliminarea unei intrări sau a unui registru din index. / Ask for an entry or register to be removed from the index.
+title: "[Removal] "
+labels: ["removal-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Eliminarea se aplică doar acestui site; datele rămân pe portalul Arhivelor Naționale.
+        **Nu includeți date personale suplimentare** (adrese, telefoane, CNP) — sunt suficiente linkul registrului și numele așa cum apare pe site. Problemele GitHub sunt publice.
+
+        Removal applies to this site only; the data remains on the National Archives' portal.
+        **Do not include extra personal data** (addresses, phone numbers, ID numbers) — the register link and the name as shown on the site are enough. GitHub issues are public.
+  - type: input
+    id: record_url
+    attributes:
+      label: Link registru / Register link
+      description: ex. / e.g. https://descopera.arhivelenationale.ro/cota/?cid=13913618
+    validations:
+      required: true
+  - type: textarea
+    id: entries
+    attributes:
+      label: Intrări / Entries
+      description: Numele exact cum apar pe site, câte unul pe linie; lăsați gol pentru tot registrul. / Names exactly as shown on the site, one per line; leave empty for the whole register.
+  - type: textarea
+    id: reason
+    attributes:
+      label: Motiv (opțional) / Reason (optional)
