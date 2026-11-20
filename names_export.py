@@ -4,16 +4,20 @@ Reads the names.py store (<store>/<CC>/*.jsonl) plus site/data/catalogue.json
 and writes, under --out:
 
     index.json      manifest (progress, shard sizes, privacy cutoff, ...)
+    prefixes.json   {record_id: image-name prefix}
     n/<key>.gz      name shards: gzip'd JSON array of rows
     p/<key>.gz      place shards: {place_key: [[record_id, entries], ...]}
     r/<id>.gz       every published row of one register
 
 A row is
-    [record_id, name, place, event, date, year, act, page, image, sort_date, event_code]
-where name..image are exactly as printed in the IDX PDF (the Archives publish
-the data under CC BY-NC-ND 4.0, so values are not altered). sort_date
-(ISO-like, from normalize_date) and event_code (b/m/d) are derived for
-sorting and filtering only.
+    [record_id, name, place, event, date, year, act, page, image]
+with every value exactly as printed in the IDX PDF (the Archives publish the
+data under CC BY-NC-ND 4.0, so values are not altered). To save space, an
+image name that starts with its register's common prefix is stored as
+"~" + the rest; the prefixes are in prefixes.json and the page restores the
+full name. The page also derives, for sorting and filtering only, the same
+sort_date (normalize_date) and event_code (event_code) as this file - keep
+the JavaScript copies in site/index.html identical (tests/derived.json).
 
 Search keys: every name word is folded (no diacritics, lower case) and passed
 through variant_key(), which merges common Romanian/Hungarian spelling
@@ -36,6 +40,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
+import os
 import re
 import shutil
 import sys
@@ -148,11 +153,13 @@ def load_rows(store: Path, catalogue: dict[int, dict], cutoff: int, excluded_rec
     place_keys: list[set[str]] = []
     dropped = {"privacy_cutoff": 0, "excluded": 0}
     progress = {c: {"done": 0, "errors": 0, "entries": 0, "last_run": r} for c, r in last_run.items()}
+    prefixes: dict[int, str] = {}
     for record_id, item in latest.items():
         stats = progress[county_of[record_id]]
         stats["done"] += 1
         stats["errors"] += bool(item.get("error"))
         info = catalogue.get(record_id, {})
+        kept: list[tuple[dict, set[str]]] = []
         for file in item.get("files", []):
             for entry in file["entries"]:
                 name = entry.get("name", "")
@@ -167,15 +174,34 @@ def load_rows(store: Path, catalogue: dict[int, dict], cutoff: int, excluded_rec
                 if year is not None and year > cutoff:
                     dropped["privacy_cutoff"] += 1
                     continue
-                g = entry.get
-                row = [record_id, name, g("place", ""), g("event", ""), g("date", ""), g("year", ""), g("act", ""),
-                       g("page", ""), g("image", ""), sort_date, event_code(g("event", ""), g("act", ""), info.get("title", ""))]
-                rows.append(json.dumps(row, ensure_ascii=False, separators=(",", ":")))
-                row_record.append(record_id)
-                name_keys.append(nk)
-                place_keys.append(keys(g("place", "")))
-                stats["entries"] += 1
-    return rows, row_record, name_keys, place_keys, progress, dropped
+                kept.append((entry, nk))
+        prefix = image_prefix([entry.get("image", "") for entry, _ in kept])
+        if prefix:
+            prefixes[record_id] = prefix
+        for entry, nk in kept:
+            g = entry.get
+            image = g("image", "")
+            if prefix and image.startswith(prefix):
+                image = "~" + image[len(prefix):]
+            row = [record_id, g("name", ""), g("place", ""), g("event", ""), g("date", ""), g("year", ""), g("act", ""),
+                   g("page", ""), image]
+            rows.append(json.dumps(row, ensure_ascii=False, separators=(",", ":")))
+            row_record.append(record_id)
+            name_keys.append(nk)
+            place_keys.append(keys(g("place", "")))
+            stats["entries"] += 1
+    return rows, row_record, name_keys, place_keys, progress, dropped, prefixes
+
+
+def image_prefix(images: list[str]) -> str:
+    """Common start of a register's image names, cut before the trailing digits
+    (PH-FD-00006-209-5(PR6)_0002.TIFF -> PH-FD-00006-209-5(PR6)_). Empty when
+    not worth it, or when any name starts with "~" (the stored marker)."""
+    images = [i for i in images if i]
+    if not images or any(i.startswith("~") for i in images):
+        return ""
+    prefix = os.path.commonprefix(images).rstrip("0123456789")
+    return prefix if len(prefix) >= 6 else ""
 
 
 def build(rows: list[str], toks: list[set[str]], max_bytes: int) -> dict[str, list[int]]:
@@ -220,7 +246,7 @@ def main() -> None:
     catalogue = load_catalogue(args.catalogue)
     cutoff = time.gmtime().tm_year - args.privacy_years
     excluded_records, excluded_entries = load_exclusions(args.exclusions)
-    rows, row_record, name_keys, place_keys, progress, dropped = load_rows(
+    rows, row_record, name_keys, place_keys, progress, dropped, prefixes = load_rows(
         args.store, catalogue, cutoff, excluded_records, excluded_entries)
     records = sum(p["done"] for p in progress.values())
 
@@ -255,6 +281,9 @@ def main() -> None:
         place_manifest[prefix] = size
         sizes["p"] += size
 
+    prefix_text = json.dumps({str(k): v for k, v in sorted(prefixes.items())}, ensure_ascii=False, separators=(",", ":"))
+    (args.out / "prefixes.json").write_text(prefix_text, encoding="utf-8")
+    sizes["prefixes"] = len(gzip.compress(prefix_text.encode("utf-8"), 9))  # served gzip'd by Pages
     total = sum(sizes.values())
     (args.out / "index.json").write_text(json.dumps({
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -264,7 +293,8 @@ def main() -> None:
         "privacy_cutoff_year": cutoff,
         "progress": progress,
         "min_token": MIN_TOKEN,
-        "columns": ["record_id", "name", "place", "event", "date", "year", "act", "page", "image", "sort_date", "event_code"],
+        "format": 2,
+        "columns": ["record_id", "name", "place", "event", "date", "year", "act", "page", "image"],
         "shards": name_manifest,
         "places": place_manifest,
         "registers": register_counts,
