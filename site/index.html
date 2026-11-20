@@ -132,7 +132,7 @@
           <tbody id="n-rows"></tbody>
         </table>
       </div>
-      <div class="more"><button id="n-more" hidden></button></div>
+      <div class="more"><button id="n-more" hidden></button> <button id="n-more-regs" hidden></button></div>
     </section>
   </div>
 
@@ -181,7 +181,7 @@ const I18N = {
     needNameOrPlace: "Introduceți un nume sau o localitate; județul, anii și evenimentul doar restrâng rezultatele.",
     minLetters: "Folosiți cel puțin {n} litere într-unul dintre cuvinte.",
     tooCommon: "„{w}” este prea frecvent pentru a fi căutat singur ({mb} MB). Adăugați un nume de familie sau mai multe litere.",
-    tooManyRegisters: "Localitatea apare în {n} registre; restrângeți după județ sau ani (cel mult {max}).",
+    moreRegisters: "Încarcă următoarele {n} registre ({left} rămase)", partialRegisters: " · din {loaded} din {total} registre ale localității",
     searching: "Se caută… ({mb} MB)", loadError: "Indexul nu a putut fi încărcat ({e}).",
     noNames: "Niciun rezultat. Încercați mai puține cuvinte, doar numele de familie sau mai puține filtre.",
     results: "{n} rezultate · indexul acoperă {records} din {total} registre",
@@ -212,7 +212,7 @@ const I18N = {
     needNameOrPlace: "Type a name or a place; county, years and event only narrow the results.",
     minLetters: "Use at least {n} letters in one of the words.",
     tooCommon: "“{w}” is too common to search alone ({mb} MB). Add a surname or more letters.",
-    tooManyRegisters: "That place appears in {n} registers; narrow by county or years (at most {max}).",
+    moreRegisters: "Load the next {n} registers ({left} left)", partialRegisters: " · from {loaded} of {total} registers for this place",
     searching: "Searching… ({mb} MB)", loadError: "Could not load the index ({e}).",
     noNames: "No results. Try fewer words, just the surname, or fewer filters.",
     results: "{n} results · index covers {records} of {total} registers",
@@ -243,7 +243,7 @@ const I18N = {
     needNameOrPlace: "Írjon be egy nevet vagy helységet; a megye, az évek és az esemény csak szűkítik a találatokat.",
     minLetters: "Legalább az egyik szóban használjon {n} betűt.",
     tooCommon: "„{w}” túl gyakori ahhoz, hogy önmagában keressen rá ({mb} MB). Adjon meg családnevet vagy több betűt.",
-    tooManyRegisters: "A helység {n} anyakönyvben szerepel; szűkítsen megyére vagy évekre (legfeljebb {max}).",
+    moreRegisters: "A következő {n} anyakönyv betöltése (még {left})", partialRegisters: " · a helység {total} anyakönyvéből {loaded} betöltve",
     searching: "Keresés… ({mb} MB)", loadError: "A mutató nem tölthető be ({e}).",
     noNames: "Nincs találat. Próbáljon kevesebb szót, csak a családnevet, vagy kevesebb szűrőt.",
     results: "{n} találat · feldolgozva: {records} / {total} anyakönyv",
@@ -435,6 +435,7 @@ $("csv").onclick = () => csv("stare-civila-registers.csv", [["county", "call_num
 // Row: [record_id, name, place, event, date, year, act, page, image, sort_date, event_code]
 const cache = new Map();
 let nameMatches = [], nameShown = 0, nameRun = 0;
+let placeBatch = null;  // place-only search: registers still to load, and the row filter to apply
 async function loadNames() {
   try {
     const response = await fetch("data/names/index.json");
@@ -579,6 +580,7 @@ async function runNames() {
   const nameKeys = nameWords.map(variantKey), placeKeys = placeWords.map(variantKey);
   const f = filters();
   $("n-rows").replaceChildren(); $("n-more").hidden = true; $("n-csv").disabled = true; $("n-banner").hidden = true; nameMatches = [];
+  placeBatch = null; $("n-more-regs").hidden = true;
   const alternatives = placeWords.length ? await placeAlternatives($("n-place").value, f) : [];
   if (run !== nameRun) return;
   // Each alternative: [variant keys, exact words]; the first is the query itself.
@@ -620,34 +622,71 @@ async function runNames() {
         const usable = keys.filter(k => k.length >= names.min_token);
         if (usable.length) for (const rid of await placeRegisters(usable, f)) found.add(rid);
       }
-      const rids = [...found];
       if (run !== nameRun) return;
-      if (rids.length > MAX_REGISTERS) return setStatus("tooManyRegisters", { n: fmt(rids.length), max: MAX_REGISTERS });
-      setStatus("searching", { mb: (rids.length * 0.03).toFixed(1) });
-      rows = (await Promise.all(rids.map(r => fetchGz(`r/${r}.gz`)))).flat();
+      // Oldest registers first; load them MAX_REGISTERS at a time ("Load the next … registers").
+      const year = (rid) => byId.get(rid)?.y0 ?? 9999;
+      const rids = [...found].sort((a, b) => year(a) - year(b) || a - b);
+      const first = rids.slice(0, MAX_REGISTERS);
+      placeBatch = { run, pending: rids.slice(MAX_REGISTERS), total: rids.length, loaded: first.length };
+      setStatus("searching", { mb: (first.length * 0.03).toFixed(1) });
+      rows = (await Promise.all(first.map(r => fetchGz(`r/${r}.gz`)))).flat();
     }
   } catch (error) { if (run === nameRun) setStatus("loadError", { e: error.message }); return; }
   if (run !== nameRun) return;
 
   const nameExact = exact ? nameWords : null;
   const seen = new Set();
-  for (const row of rows) {
+  const accept = (row) => {
     const key = `${row[0]}|${row[1]}|${row[4]}|${row[6]}|${row[8]}`;
-    if (seen.has(key)) continue;
-    if (nameKeys.length && !matchesWords(row[1], nameKeys, nameExact)) continue;
-    if (placeKeys.length && !placeAlts.some(([keys, exactWords]) => keys.length && matchesWords(row[2], keys, exactWords))) continue;
-    if (!passesFilters(row, f)) continue;
-    seen.add(key); nameMatches.push(row);
-  }
+    if (seen.has(key)) return false;
+    if (nameKeys.length && !matchesWords(row[1], nameKeys, nameExact)) return false;
+    if (placeKeys.length && !placeAlts.some(([keys, exactWords]) => keys.length && matchesWords(row[2], keys, exactWords))) return false;
+    if (!passesFilters(row, f)) return false;
+    seen.add(key);
+    return true;
+  };
+  nameMatches = rows.filter(accept);
+  sortMatches();
+  if (placeBatch) Object.assign(placeBatch, { accept, also });
+  finishNames(nameMatches.length || placeBatch?.pending.length ? null : "noNames", also);
+}
+function sortMatches() {
   const sortKey = (row) => row[9] || String(byId.get(row[0])?.y0 || "9999");  // undated: register's first year, else last
   nameMatches.sort((a, b) => sortKey(a).localeCompare(sortKey(b)) || a[1].localeCompare(b[1], "ro"));
-  finishNames(nameMatches.length ? null : "noNames", also);
+}
+async function loadMoreRegisters() {
+  const batch = placeBatch;
+  if (!batch || batch.run !== nameRun || !batch.pending.length) return;
+  const next = batch.pending.splice(0, MAX_REGISTERS);
+  const button = $("n-more-regs"); button.disabled = true;
+  let rows;
+  try { rows = (await Promise.all(next.map(r => fetchGz(`r/${r}.gz`)))).flat(); }
+  catch (error) { button.disabled = false; batch.pending.unshift(...next); setStatus("loadError", { e: error.message }); return; }
+  if (batch !== placeBatch || batch.run !== nameRun) return;  // a newer search started meanwhile
+  batch.loaded += next.length;
+  nameMatches.push(...rows.filter(batch.accept));
+  sortMatches();
+  const keep = Math.max(nameShown, PAGE);  // keep as many rows on screen as before
+  nameShown = 0; $("n-rows").replaceChildren();
+  while (nameShown < Math.min(keep, nameMatches.length)) moreNames(null);
+  if (!nameMatches.length) moreNames("noNames");
+  updateStatus(batch.also);
+  button.disabled = false;
+}
+$("n-more-regs").onclick = loadMoreRegisters;
+function updateStatus(suffix = "") {
+  setStatus("results", { n: fmt(nameMatches.length), records: fmt(names.records), total: fmt(data.items.length) });
+  if (placeBatch && placeBatch.run === nameRun && placeBatch.pending.length)
+    $("n-count").textContent += t("partialRegisters", { loaded: fmt(placeBatch.loaded), total: fmt(placeBatch.total) });
+  if (suffix) $("n-count").textContent += suffix;
+  $("n-csv").disabled = !nameMatches.length;
+  const left = placeBatch && placeBatch.run === nameRun ? placeBatch.pending.length : 0;
+  $("n-more-regs").hidden = !left;
+  if (left) $("n-more-regs").textContent = t("moreRegisters", { n: fmt(Math.min(MAX_REGISTERS, left)), left: fmt(left) });
 }
 function finishNames(emptyKey, suffix = "") {
   nameShown = 0; $("n-rows").replaceChildren(); moreNames(emptyKey);
-  setStatus("results", { n: fmt(nameMatches.length), records: fmt(names.records), total: fmt(data.items.length) });
-  if (suffix) $("n-count").textContent += suffix;
-  $("n-csv").disabled = !nameMatches.length;
+  updateStatus(suffix);
 }
 function shownDate(row) { const date = row[4], year = row[5]; return date && !date.startsWith("#") ? date : (year || date); }
 function eventLabel(row) { return row[3] || (EVENTS[row[10]] ? t(EVENTS[row[10]]) : ""); }
