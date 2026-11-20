@@ -20,10 +20,13 @@ jobs:
         with:
           python-version: "3.12"
       - run: python crawl.py --refresh
+      - name: Refresh links to the Archives' genealogy searches
+        continue-on-error: true
+        run: python genealogy_links.py
       - name: Commit catalogue if it changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-          git add site/data/catalogue.json
+          git add site/data/catalogue.json site/data/genealogy.json
           git diff --cached --quiet || git commit -m "Refresh IDX catalogue"
           git push

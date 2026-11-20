@@ -21,6 +21,10 @@ python crawl.py --export     # rebuild site/data from idx_store/ only
 
 The code is CC0; the data belongs to the National Archives of Romania and is used under their [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) licence — see [NOTICE.md](NOTICE.md) and the site's **About** page (`site/about.html`). Values are shown exactly as in the IDX files; normalised forms are used only for searching, sorting and filtering. Entries from the last 100 years are not published (`names_export.py --privacy-years`), pages carry `noindex`, and removal requests (GitHub issue form) are applied through [`privacy/exclusions.json`](privacy/exclusions.json) at every deploy.
 
+### Registers without a name index
+
+Only registers with an IDX file are indexed. For everything else (scans only), the site links each county to the Archives' own *Genealogie – Registre parohiale și de stare civilă* predefined search; `genealogy_links.py` reads those links into `site/data/genealogy.json` (refreshed monthly with the catalogue).
+
 ### Languages and historical place names
 
 The site is available in Romanian, Hungarian and English (switch in the header; Hungarian also shows counties as e.g. “Bihor (Bihar)”). `places_build.py` builds `site/data/places.json` — Hungarian, German and other historical names of ~17,000 Romanian settlements from Wikidata (CC0) — used by the **Historical names** page (`site/places.html`) and by the Names-tab place search, which by default also searches a settlement's other names (Salonta ↔ Nagyszalonta). It is built by the *Build place names* workflow (monthly and on demand).
