@@ -449,10 +449,57 @@ function fetchGz(path) {
   if (!cache.has(path)) cache.set(path, (async () => {
     const response = await fetch(`data/names/${path}`);
     if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
-    return JSON.parse(await new Response(response.body.pipeThrough(new DecompressionStream("gzip"))).text());
+    const json = JSON.parse(await new Response(response.body.pipeThrough(new DecompressionStream("gzip"))).text());
+    return /^[nr]\//.test(path) ? completeRows(json, await loadPrefixes()) : json;
   })());
   return cache.get(path);
 }
+let prefixesPromise = null;
+function loadPrefixes() {
+  // Image-name prefixes per register (index format 2); older builds have none.
+  if (!prefixesPromise) prefixesPromise = fetch("data/names/prefixes.json").then(r => r.ok ? r.json() : {}).catch(() => ({}));
+  return prefixesPromise;
+}
+function completeRows(rows, prefixes) {
+  // Stored rows hold the IDX values only: restore full image names ("~" + suffix)
+  // and append the derived sort date [9] and event code [10] used for sorting and filters.
+  for (const row of rows) {
+    if (row.length !== 9) continue;
+    const prefix = prefixes[row[0]];
+    if (prefix && row[8].startsWith("~")) row[8] = prefix + row[8].slice(1);
+    row.push(normalizeDate(row[4], row[5]), eventCode(row[3], row[6], byId.get(row[0])?.title || ""));
+  }
+  return rows;
+}
+
+// BEGIN derived — keep identical to normalize_date / event_code in names_export.py (tests/derived.json)
+function normalizeDate(date, year) {
+  date = String(date).trim();
+  if (/^\d{4}(-\d\d){0,2}$/.test(date)) return date;
+  let m = /^(\d\d)[-./]?(\d\d)[-./]?(\d{4})$/.exec(date);
+  if (m) {
+    const [, day, month, yyyy] = m;
+    return [yyyy, ...(month !== "00" ? [month] : []), ...(month !== "00" && day !== "00" ? [day] : [])].join("-");
+  }
+  m = /^(\d{1,2})[./](\d{1,2})[./](\d{4})$/.exec(date);
+  if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  m = /\b(1[5-9]\d\d|20\d\d)\b/.exec(year || "");
+  return m ? m[1] : "";
+}
+const EVENT_WORDS = [["b", ["nast", "nasc", "nat", "botez"]], ["m", ["casat", "cunun", "matrim"]], ["d", ["dec", "mort", "inmor", "ingrop"]]];
+const EVENT_LETTER = { b: "n", m: "c", d: "d" }, ACT_PREFIX = { n: "b", c: "m", d: "d", m: "d" };
+const TITLE_WORDS = [["b", ["nascut", "naster"]], ["m", ["casator", "cununa"]], ["d", ["decedat", "decese", "morti"]]];
+function eventCode(event, act, title) {
+  const folded = fold(event).trim();
+  for (const [code, stems] of EVENT_WORDS)
+    if (stems.some(s => folded.startsWith(s)) || folded === code || folded === EVENT_LETTER[code]) return code;
+  const m = /^\s*([NCDMncdm])\s*-/.exec(act);
+  if (m) return ACT_PREFIX[m[1].toLowerCase()];
+  const t = fold(title);
+  const found = TITLE_WORDS.filter(([, stems]) => stems.some(s => t.includes(s))).map(([code]) => code);
+  return found.length === 1 ? found[0] : "";
+}
+// END derived
 function shardsFor(key) {
   return names.keys.filter(k => {
     const exact = k.endsWith("_"), p = exact ? k.slice(0, -1) : k;
