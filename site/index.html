@@ -4,11 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
+  <script src="theme.js"></script>
   <title>Stare Civilă IDX Finder</title>
   <meta name="description" content="Căutare în indexurile de nume (IDX) ale registrelor de stare civilă din Arhivele Naționale ale României.">
   <style>
     :root { color-scheme: light; --ink:#182431; --muted:#5d6d7c; --line:#dce3e8; --blue:#165d87; --blue-dark:#104665; --paper:#fff; --wash:#f3f6f8; --mark:#fff1b8; --focus:#165d8733; --tab:#e8eef2; }
     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --ink:#e3e9ee; --muted:#9aabb9; --line:#2c3a46; --blue:#7cc0ea; --blue-dark:#a5d4f2; --paper:#17212a; --wash:#0f171e; --mark:#5b4a12; --focus:#7cc0ea40; --tab:#22303b; } }
+    :root[data-theme="dark"] { color-scheme: dark; --ink:#e3e9ee; --muted:#9aabb9; --line:#2c3a46; --blue:#7cc0ea; --blue-dark:#a5d4f2; --paper:#17212a; --wash:#0f171e; --mark:#5b4a12; --focus:#7cc0ea40; --tab:#22303b; }
+    .theme-toggle { display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:7px; background:var(--tab); color:var(--ink); padding:4px 7px; min-height:26px; cursor:pointer; }
+    .theme-toggle:hover { background:var(--line); }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--wash); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
     main { max-width:1180px; margin:0 auto; padding:28px 22px 56px; }
@@ -89,7 +93,7 @@
         <h1>Stare Civilă IDX Finder</h1>
         <p data-i18n-html="intro"></p>
       </div>
-      <div class="lang"><a href="places.html" id="places-link" data-i18n="historical"></a><a href="about.html" id="about-link" data-i18n="about"></a><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-hu" aria-pressed="false">HU</button><button id="lang-en" aria-pressed="false">EN</button></div>
+      <div class="lang"><a href="places.html" id="places-link" data-i18n="historical"></a><a href="about.html" id="about-link" data-i18n="about"></a><button class="theme-toggle" type="button"></button><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-hu" aria-pressed="false">HU</button><button id="lang-en" aria-pressed="false">EN</button></div>
     </div>
   </header>
 

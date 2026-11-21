@@ -4,10 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
+  <script src="theme.js"></script>
   <title>Despre · Stare Civilă IDX Finder</title>
   <style>
     :root { color-scheme: light; --ink:#182431; --muted:#5d6d7c; --line:#dce3e8; --blue:#165d87; --paper:#fff; --wash:#f3f6f8; --tab:#e8eef2; }
     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --ink:#e3e9ee; --muted:#9aabb9; --line:#2c3a46; --blue:#7cc0ea; --paper:#17212a; --wash:#0f171e; --tab:#22303b; } }
+    :root[data-theme="dark"] { color-scheme: dark; --ink:#e3e9ee; --muted:#9aabb9; --line:#2c3a46; --blue:#7cc0ea; --paper:#17212a; --wash:#0f171e; --tab:#22303b; }
+    .theme-toggle { display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:7px; background:var(--tab); color:var(--ink); padding:4px 7px; min-height:26px; cursor:pointer; }
+    .theme-toggle:hover { background:var(--line); }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--wash); color:var(--ink); font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif; }
     main { max-width:820px; margin:0 auto; padding:28px 22px 56px; }
@@ -29,7 +33,7 @@
 <main>
   <div class="top">
     <a href="index.html" id="back">← Stare Civilă IDX Finder</a>
-    <div class="lang"><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-hu" aria-pressed="false">HU</button><button id="lang-en" aria-pressed="false">EN</button></div>
+    <div class="lang"><button class="theme-toggle" type="button"></button><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-hu" aria-pressed="false">HU</button><button id="lang-en" aria-pressed="false">EN</button></div>
   </div>
 
   <article lang="ro" id="content-ro">
