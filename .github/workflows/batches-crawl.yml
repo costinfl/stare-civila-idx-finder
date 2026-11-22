@@ -1,0 +1,102 @@
+name: Crawl batch PDFs
+
+# For every register, reads its record page and the first few KB of each scanned
+# batch PDF after the first (page count + first image number), so the site can
+# open an IDX image in the Archives' viewer at the right page. Same pacing and
+# shape as "Crawl IDX names": ~5 h runs in 55-minute chunks committed to the
+# names-data branch (batches/), each run starting the next until every register
+# is done. It shares the name crawl's concurrency group, so the two never run at
+# the same time; start it by hand once the name crawl has finished.
+on:
+  workflow_dispatch:
+    inputs:
+      chunks:
+        description: "Number of 55-minute chunks to run"
+        default: "5"
+
+permissions:
+  contents: write
+  actions: write  # to dispatch the next run
+
+concurrency:
+  group: names-crawl
+  cancel-in-progress: false
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: names-data
+          path: names-data
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Crawl in chunks
+        id: crawl
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git -C names-data config user.name "github-actions[bot]"
+          git -C names-data config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          echo "started=$(date -u +%Y%m%dT%H%M%SZ)" >> "$GITHUB_OUTPUT"
+          for chunk in $(seq 1 "${{ inputs.chunks || 5 }}"); do
+            python batches.py --store names-data/batches --max-minutes 55 | tail -n 3
+            git -C names-data add batches
+            if git -C names-data diff --cached --quiet; then
+              echo "Nothing new; every register is done or unreachable."
+              break
+            fi
+            summary=$(python batches.py --store names-data/batches --stats | tail -n 1)
+            git -C names-data commit -q -m "Crawl batches: ${summary//  / }"
+            git -C names-data push -q origin HEAD:names-data
+            echo "progressed=true" >> "$GITHUB_OUTPUT"
+            # Refresh the site now rather than at the end of the run. A deploy
+            # failing to start must not stop the crawl.
+            gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" || echo "::warning::Could not start a Pages deploy"
+          done
+          python batches.py --store names-data/batches --stats
+      - name: Retry failed registers once everything has been tried
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          read -r done all < <(python batches.py --store names-data/batches --stats | tail -n 1 | awk '{split($2, a, "/"); print a[1], a[2]}')
+          [ "$done" -lt "$all" ] && { echo "Registers still untried; retries wait until the end."; exit 0; }
+          python batches.py --store names-data/batches --retry-errors --max-minutes 55 | tail -n 3
+          git -C names-data add batches
+          if ! git -C names-data diff --cached --quiet; then
+            summary=$(python batches.py --store names-data/batches --stats | tail -n 1)
+            git -C names-data commit -q -m "Retry failed batch probes: ${summary//  / }"
+            git -C names-data push -q origin HEAD:names-data
+            gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" || echo "::warning::Could not start a Pages deploy"
+          fi
+      - name: Start the next run if registers remain
+        if: success() && steps.crawl.outputs.progressed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          read -r done all < <(python batches.py --store names-data/batches --stats | tail -n 1 | awk '{split($2, a, "/"); print a[1], a[2]}')
+          echo "$done of $all registers stored"
+          # Stop chaining if most of this run's registers failed (e.g. the archive is blocking us).
+          read -r fetched failed < <(python -c "import json, pathlib, sys; lines = [l for p in pathlib.Path('names-data/batches').glob('*/*.jsonl') if p.stem >= sys.argv[1] for l in p.read_text(encoding='utf-8').splitlines() if l.strip()]; print(len(lines), sum('\"error\"' in l for l in lines))" "${{ steps.crawl.outputs.started }}")
+          echo "This run: $fetched registers, $failed failed"
+          if [ "$failed" -gt $((fetched / 2)) ]; then
+            echo "::warning::More than half of this run's registers failed; not starting another run."
+          elif [ "$done" -lt "$all" ]; then
+            gh workflow run batches-crawl.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f chunks="${{ inputs.chunks || 5 }}"
+            echo "Dispatched the next run."
+          fi
+      - name: Progress summary
+        if: always()
+        run: |
+          {
+            echo "### Batch PDF crawl progress"
+            echo '```'
+            python batches.py --store names-data/batches --stats
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

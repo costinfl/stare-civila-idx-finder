@@ -133,7 +133,7 @@
       <div class="banner" id="n-banner" hidden><span id="n-banner-text"></span><button class="link" id="n-back" data-i18n="back"></button></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th data-i18n="thName"></th><th data-i18n="thEvent"></th><th data-i18n="thDate"></th><th data-i18n="thPlace"></th><th data-i18n="thAct"></th><th data-i18n="thRegister"></th><th></th></tr></thead>
+          <thead><tr><th data-i18n="thName"></th><th data-i18n="thEvent"></th><th data-i18n="thDate"></th><th data-i18n="thPlace"></th><th data-i18n="thAct"></th><th id="n-th-reg" data-i18n="thRegister"></th><th></th></tr></thead>
           <tbody id="n-rows"></tbody>
         </table>
       </div>
@@ -178,7 +178,7 @@ const I18N = {
     lblFrom: "Din anul", lblTo: "Până în anul", exact: "Ortografie exactă", csv: "Descarcă CSV",
     hintNames: "Fiecare cuvânt se potrivește cu începutul unei părți din nume, fără diacritice. Variantele de scriere uzuale sunt incluse (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru) – bifați „Ortografie exactă” pentru a le exclude. Folosiți cel puțin 3 litere. Puteți căuta și doar după localitate; sunt incluse și numele istorice ale localității (ex. Salonta – Nagyszalonta). Județul, anii și evenimentul restrâng rezultatele.",
     thCounty: "Județ", thIndexed: "Registre indexate", thNames: "Nume", thLastRun: "Ultima rulare",
-    thName: "Nume", thEvent: "Eveniment", thDate: "Data", thPlace: "Localitate", thAct: "Act · pagină", thRegister: "Registru",
+    thName: "Nume", thEvent: "Eveniment", thDate: "Data", thPlace: "Localitate", thAct: "Act · pagină", thRegister: "Registru", thImage: "Imagine registru", openRegister: "Deschide registrul pe site-ul Arhivelor", imageTitle: "Deschide imaginea {g} — lotul {b}, pagina {p} — în vizualizatorul Arhivelor",
     lblQ: "Căutare în titlu sau cotă", phQ: "ex. născuți Ploiești, PH-F-00006-209, decedați 1913",
     thCall: "Cotă", thTitle: "Titlu", thYears: "Ani", thLevel: "Nivel",
     back: "Înapoi la rezultate", more: "Mai multe ({n} rămase)", cite: "Citează", copied: "Citare copiată", entries: "Intrări", report: "Raportează",
@@ -210,7 +210,7 @@ const I18N = {
     lblFrom: "From year", lblTo: "To year", exact: "Exact spelling", csv: "Download CSV",
     hintNames: "Each word matches the start of a name part, ignoring diacritics. Common spelling variants are included (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru); tick “Exact spelling” to leave them out. Use at least 3 letters. You can also search by place alone; the place’s historical names are included (e.g. Salonta – Nagyszalonta). County, years and event narrow the results.",
     thCounty: "County", thIndexed: "Registers indexed", thNames: "Names", thLastRun: "Last crawled",
-    thName: "Name", thEvent: "Event", thDate: "Date", thPlace: "Place", thAct: "Act · page", thRegister: "Register",
+    thName: "Name", thEvent: "Event", thDate: "Date", thPlace: "Place", thAct: "Act · page", thRegister: "Register", thImage: "Record image", openRegister: "Open the register on the Archives’ site", imageTitle: "Open image {g} — batch {b}, page {p} — in the Archives’ viewer",
     lblQ: "Search title or call number", phQ: "e.g. născuți Ploiești, PH-F-00006-209, decedați 1913",
     thCall: "Call number", thTitle: "Title", thYears: "Years", thLevel: "Level",
     back: "Back to results", more: "Show more ({n} left)", cite: "Cite", copied: "Citation copied", entries: "Entries", report: "Report",
@@ -242,7 +242,7 @@ const I18N = {
     lblFrom: "Évtől", lblTo: "Évig", exact: "Pontos írásmód", csv: "CSV letöltése",
     hintNames: "Minden szó egy névrész elejére illeszkedik, ékezetektől függetlenül. A gyakori írásváltozatok is szerepelnek (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru) – a „Pontos írásmód” bejelölésével kizárhatók. Legalább 3 betűt használjon. Csak helységre is kereshet; a helység történelmi nevei is szerepelnek (pl. Salonta – Nagyszalonta). A megye, az évek és az esemény szűkítik a találatokat.",
     thCounty: "Megye", thIndexed: "Feldolgozott anyakönyvek", thNames: "Nevek", thLastRun: "Utolsó futás",
-    thName: "Név", thEvent: "Esemény", thDate: "Dátum", thPlace: "Helység", thAct: "Bejegyzés · oldal", thRegister: "Anyakönyv",
+    thName: "Név", thEvent: "Esemény", thDate: "Dátum", thPlace: "Helység", thAct: "Bejegyzés · oldal", thRegister: "Anyakönyv", thImage: "Anyakönyvi kép", openRegister: "Az anyakönyv megnyitása a Levéltár oldalán", imageTitle: "A(z) {g}. kép megnyitása — {b}. köteg, {p}. oldal — a Levéltár megjelenítőjében",
     lblQ: "Keresés címben vagy jelzetben", phQ: "pl. născuți Ploiești, PH-F-00006-209, decedați 1913",
     thCall: "Jelzet", thTitle: "Cím", thYears: "Évek", thLevel: "Szint",
     back: "Vissza a találatokhoz", more: "Továbbiak ({n} maradt)", cite: "Hivatkozás", copied: "Hivatkozás másolva", entries: "Bejegyzések", report: "Hibajelzés",
@@ -473,9 +473,43 @@ function fetchGz(path) {
     const response = await fetch(`data/names/${path}`);
     if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
     const json = JSON.parse(await new Response(response.body.pipeThrough(new DecompressionStream("gzip"))).text());
-    return /^[nr]\//.test(path) ? completeRows(json, await loadPrefixes()) : json;
+    if (!/^[nr]\//.test(path)) return json;
+    await loadBatches();
+    return completeRows(json, await loadPrefixes());
   })());
   return cache.get(path);
+}
+let batchStarts = {}, batchesPromise = null;
+function loadBatches() {
+  // Scanned batch PDFs per register: [[mediaId, first image number], …] (from batches.py; may be absent).
+  if (!batchesPromise) batchesPromise = fetch("data/names/batches.json").then(r => r.ok ? r.json() : {}).catch(() => ({})).then(d => { batchStarts = d; });
+  return batchesPromise;
+}
+// BEGIN pages — keep identical to image_page in names_export.py (tests/pages.json)
+function imagePage(starts, image) {
+  let best = -1;
+  starts.forEach(([, start], i) => { if (start !== null && start <= image) best = i; });
+  if (best < 0) return null;
+  if (best + 1 < starts.length) {
+    const following = starts[best + 1][1];
+    if (following === null || image >= following) return null;
+  }
+  return [best, image - starts[best][1] + 1];
+}
+// END pages
+const VIEWER = "/wp-content/themes/anr-theme/libs/pdfjs/web/viewer.html";
+function imageNode(row) {
+  // The IDX "Imagine PDF" value, linked to the Archives' own viewer at the right batch and page when known.
+  const image = row[8];
+  const m = /_(\d+)\D*$/.exec(image || "");
+  const starts = batchStarts[row[0]];
+  const hit = m && starts ? imagePage(starts, Number(m[1])) : null;
+  if (!hit) { const span = document.createElement("span"); span.textContent = image || ""; return span; }
+  const [index, page] = hit;
+  const file = `${data.source}/api/media/file?id=${row[0]}&type=fisiere&mediaId=${starts[index][0]}`;
+  const a = link(`${data.source}${VIEWER}?file=${encodeURIComponent(file)}#page=${page}`, image);
+  a.title = t("imageTitle", { g: Number(m[1]), b: index + 1, p: page });
+  return a;
 }
 let prefixesPromise = null;
 function loadPrefixes() {
@@ -666,7 +700,7 @@ async function runNames() {
       rows = names.registers[browseId] ? await fetchGz(`r/${browseId}.gz`) : [];
       if (run !== nameRun) return;
       $("n-banner").hidden = false;
-      $("n-banner-text").textContent = t("registerView", { n: fmt(rows.length), call: reg ? reg.call : browseId });
+      $("n-banner-text").replaceChildren(t("registerView", { n: fmt(rows.length), call: reg ? reg.call : browseId }), " · ", link(recordUrl(browseId), t("openRegister")));
       nameMatches = rows.slice();
       currentPlaceKeys = [];
       return finishNames(nameMatches.length ? null : "noNames");
@@ -777,6 +811,7 @@ function reportUrl(row) {
   return `${REPO}/issues/new?${p}`;
 }
 function moreNames(emptyKey) {
+  const th = $("n-th-reg"); th.dataset.i18n = browseId ? "thImage" : "thRegister"; th.textContent = t(th.dataset.i18n);
   const nameKeys = queryKeys($("n-q").value), placeKeys = currentPlaceKeys;
   const body = $("n-rows");
   if (emptyKey && !nameMatches.length) { const c = body.insertRow().insertCell(); c.colSpan = 7; c.className = "empty"; c.textContent = t(emptyKey); }
@@ -790,10 +825,15 @@ function moreNames(emptyKey) {
     const pl = r.insertCell(); highlight(pl, place, browseId ? [] : placeKeys, true);
     const ap = r.insertCell();
     ap.textContent = [act && `${t("act")} ${act}`, page && `${t("page")} ${page}`].filter(Boolean).join(" · ");
-    if (image) { const s = document.createElement("div"); s.className = "sub"; s.textContent = image; ap.append(s); }
     const rc = r.insertCell();
-    rc.append(link(recordUrl(id), reg ? reg.call : `#${id}`));
-    if (reg) { const s = document.createElement("div"); s.className = "sub"; s.textContent = `${countyName(reg.c)} · ${reg.years}`; rc.append(s); }
+    if (browseId) {
+      // Whole-register view: every row is the same register (linked in the banner), so show the record image instead.
+      rc.className = "sub"; rc.append(imageNode(row));
+    } else {
+      if (image) { const s = document.createElement("div"); s.className = "sub"; s.append(imageNode(row)); ap.append(s); }
+      rc.append(link(recordUrl(id), reg ? reg.call : `#${id}`));
+      if (reg) { const s = document.createElement("div"); s.className = "sub"; s.textContent = `${countyName(reg.c)} · ${reg.years}`; rc.append(s); }
+    }
     const tools = r.insertCell(); tools.className = "tools";
     tools.append(button(t("cite"), () => copy(citeEntry(row))));
     if (!browseId) tools.append(button(t("entries"), () => openRegister(id)));
