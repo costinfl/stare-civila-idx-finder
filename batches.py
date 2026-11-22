@@ -124,6 +124,12 @@ def probe(record_id: int) -> dict:
         count, start, n = page_head(record_id, media_id)
         read += n
         batches.append([media_id, name, count, start])
+    if len(batches) > 1 and any(b[3] is None for b in batches[1:]):
+        # Some PDFs have page counts but no bookmarks: then later starts are
+        # derived from the counts, which needs the first batch's count too.
+        count, _start, n = page_head(record_id, batches[0][0])
+        read += n
+        batches[0][2] = count
     return {"id": record_id, "batches": batches, "bytes": read}
 
 
