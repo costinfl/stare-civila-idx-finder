@@ -49,6 +49,7 @@ import shutil
 import sys
 import time
 import unicodedata
+from array import array
 from collections import defaultdict
 from pathlib import Path
 
@@ -180,65 +181,97 @@ def load_exclusions(path: Path) -> tuple[set[int], set[tuple[int, str]]]:
 
 def load_rows(store: Path, catalogue: dict[int, dict], cutoff: int, excluded_records: set[int],
               excluded_entries: set[tuple[int, str]]):
-    """Return rows (JSON strings), their record ids, name keys, place keys, per-county progress and drop counts."""
-    latest: dict[int, dict] = {}
+    """Return rows (JSON strings), their record ids, name keys, place counts, per-county progress and drop counts.
+
+    Two passes keep memory low: the first only notes which line holds each
+    register's latest usable result (the last one, unless it is an error);
+    the second re-reads the files and turns just those lines into rows, one
+    register at a time. Rows come out in the order registers first appear,
+    as before."""
+    paths = sorted(store.glob("*/*.jsonl"))
+    chosen: dict[int, tuple[int, int, bool]] = {}  # record id -> (path index, line number, is error)
     county_of: dict[int, str] = {}
     last_run: dict[str, str] = {}
-    for path in sorted(store.glob("*/*.jsonl")):
+    for path_index, path in enumerate(paths):
         county = path.parent.name
         last_run[county] = max(last_run.get(county, ""), path.stem)
-        for line in path.read_text(encoding="utf-8").splitlines():
+        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines()):
             try:
                 item = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            if item["id"] not in latest or not item.get("error"):
-                latest[item["id"]] = item
+            error = bool(item.get("error"))
+            if item["id"] not in chosen or not error:
+                chosen[item["id"]] = (path_index, line_no, error)
                 county_of[item["id"]] = county
-    rows: list[str] = []
-    row_record: list[int] = []
-    name_keys: list[set[str]] = []
-    place_keys: list[set[str]] = []
+            del item
+    wanted: dict[int, dict[int, int]] = defaultdict(dict)
+    for record_id, (path_index, line_no, _error) in chosen.items():
+        wanted[path_index][line_no] = record_id
+
     dropped = {"privacy_cutoff": 0, "excluded": 0}
     progress = {c: {"done": 0, "errors": 0, "entries": 0, "last_run": r} for c, r in last_run.items()}
-    prefixes: dict[int, str] = {}
-    for record_id, item in latest.items():
+    for record_id, (_p, _l, error) in chosen.items():
         stats = progress[county_of[record_id]]
         stats["done"] += 1
-        stats["errors"] += bool(item.get("error"))
-        info = catalogue.get(record_id, {})
-        kept: list[tuple[dict, set[str]]] = []
-        for file in item.get("files", []):
-            for entry in file["entries"]:
-                name = entry.get("name", "")
-                nk = keys(name)
-                if not nk:
-                    continue
-                if record_id in excluded_records or (record_id, fold(name).strip()) in excluded_entries:
-                    dropped["excluded"] += 1
-                    continue
-                sort_date = normalize_date(entry.get("date", ""), entry.get("year", ""))
-                year = int(sort_date[:4]) if sort_date else info.get("end_year")
-                if year is not None and year > cutoff:
-                    dropped["privacy_cutoff"] += 1
-                    continue
-                kept.append((entry, nk))
-        prefix = image_prefix([entry.get("image", "") for entry, _ in kept])
-        if prefix:
-            prefixes[record_id] = prefix
-        for entry, nk in kept:
-            g = entry.get
-            image = g("image", "")
-            if prefix and image.startswith(prefix):
-                image = "~" + image[len(prefix):]
-            row = [record_id, g("name", ""), g("place", ""), g("event", ""), g("date", ""), g("year", ""), g("act", ""),
-                   g("page", ""), image]
-            rows.append(json.dumps(row, ensure_ascii=False, separators=(",", ":")))
+        stats["errors"] += error
+    prefixes: dict[int, str] = {}
+    places: dict[str, dict[str, dict[int, int]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+    per_record: dict[int, list[tuple[str, tuple[str, ...]]]] = {}
+    for path_index, lines in wanted.items():
+        text = paths[path_index].read_text(encoding="utf-8").splitlines()
+        for line_no, record_id in lines.items():
+            item = json.loads(text[line_no])
+            per_record[record_id] = register_rows(record_id, item, catalogue.get(record_id, {}), cutoff,
+                                                  excluded_records, excluded_entries, dropped, prefixes, places)
+            progress[county_of[record_id]]["entries"] += len(per_record[record_id])
+            del item
+        del text
+
+    rows: list[str] = []
+    row_record = array("i")
+    name_keys: list[tuple[str, ...]] = []
+    for record_id in chosen:  # first-appearance order
+        for row, nk in per_record.pop(record_id, []):
+            rows.append(row)
             row_record.append(record_id)
             name_keys.append(nk)
-            place_keys.append(keys(g("place", "")))
-            stats["entries"] += 1
-    return rows, row_record, name_keys, place_keys, progress, dropped, prefixes
+    return rows, row_record, name_keys, places, progress, dropped, prefixes
+
+
+def register_rows(record_id, item, info, cutoff, excluded_records, excluded_entries, dropped, prefixes, places):
+    """One register's rows as (JSON string, name keys); also counts its place keys."""
+    kept: list[tuple[dict, set[str]]] = []
+    for file in item.get("files", []):
+        for entry in file["entries"]:
+            name = entry.get("name", "")
+            nk = keys(name)
+            if not nk:
+                continue
+            if record_id in excluded_records or (record_id, fold(name).strip()) in excluded_entries:
+                dropped["excluded"] += 1
+                continue
+            sort_date = normalize_date(entry.get("date", ""), entry.get("year", ""))
+            year = int(sort_date[:4]) if sort_date else info.get("end_year")
+            if year is not None and year > cutoff:
+                dropped["privacy_cutoff"] += 1
+                continue
+            kept.append((entry, nk))
+    prefix = image_prefix([entry.get("image", "") for entry, _ in kept])
+    if prefix:
+        prefixes[record_id] = prefix
+    out = []
+    for entry, nk in kept:
+        g = entry.get
+        image = g("image", "")
+        if prefix and image.startswith(prefix):
+            image = "~" + image[len(prefix):]
+        row = [record_id, g("name", ""), g("place", ""), g("event", ""), g("date", ""), g("year", ""), g("act", ""),
+               g("page", ""), image]
+        out.append((json.dumps(row, ensure_ascii=False, separators=(",", ":")), tuple(nk)))
+        for k in keys(g("place", "")):
+            places[k[:MIN_TOKEN]][k][record_id] += 1
+    return out
 
 
 def image_prefix(images: list[str]) -> str:
@@ -252,7 +285,7 @@ def image_prefix(images: list[str]) -> str:
     return prefix if len(prefix) >= 6 else ""
 
 
-def build(rows: list[str], toks: list[set[str]], max_bytes: int) -> dict[str, list[int]]:
+def build(rows: list[str], toks: list, max_bytes: int) -> dict[str, list[int]]:
     """Return shard key -> row indexes, splitting oversized prefixes."""
     pending: dict[str, list[tuple[int, str]]] = defaultdict(list)
     for index, ts in enumerate(toks):
@@ -296,7 +329,7 @@ def main() -> None:
     catalogue = load_catalogue(args.catalogue)
     cutoff = time.gmtime().tm_year - args.privacy_years
     excluded_records, excluded_entries = load_exclusions(args.exclusions)
-    rows, row_record, name_keys, place_keys, progress, dropped, prefixes = load_rows(
+    rows, row_record, name_keys, places, progress, dropped, prefixes = load_rows(
         args.store, catalogue, cutoff, excluded_records, excluded_entries)
     records = sum(p["done"] for p in progress.values())
 
@@ -307,7 +340,9 @@ def main() -> None:
     sizes = {"n": 0, "p": 0, "r": 0}
 
     name_manifest: dict[str, list[int]] = {}
-    for key, members in sorted(build(rows, name_keys, args.max_kb * 1000).items()):
+    shards = build(rows, name_keys, args.max_kb * 1000)
+    del name_keys
+    for key, members in sorted(shards.items()):
         size = write_gz(args.out / "n" / f"{key}.gz", "[" + ",".join(rows[i] for i in members) + "]")
         name_manifest[key] = [len(members), size]
         sizes["n"] += size
@@ -320,10 +355,6 @@ def main() -> None:
         sizes["r"] += write_gz(args.out / "r" / f"{record_id}.gz", "[" + ",".join(rows[i] for i in members) + "]")
         register_counts[record_id] = len(members)
 
-    places: dict[str, dict[str, dict[int, int]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
-    for index, ks in enumerate(place_keys):
-        for k in ks:
-            places[k[:MIN_TOKEN]][k][row_record[index]] += 1
     place_manifest = {}
     for prefix, table in sorted(places.items()):
         payload = {k: sorted([rid, n] for rid, n in refs.items()) for k, refs in sorted(table.items())}
