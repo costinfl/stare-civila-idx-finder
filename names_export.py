@@ -5,6 +5,9 @@ and writes, under --out:
 
     index.json      manifest (progress, shard sizes, privacy cutoff, ...)
     prefixes.json   {record_id: image-name prefix}
+    batches.json    {record_id: [[mediaId, first image number], ...]} of the scanned
+                    batch PDFs (from batches.py), so the page can open an image in the
+                    Archives' viewer at the right page; see image_page()
     n/<key>.gz      name shards: gzip'd JSON array of rows
     p/<key>.gz      place shards: {place_key: [[record_id, entries], ...]}
     r/<id>.gz       every published row of one register
@@ -110,6 +113,51 @@ def event_code(event: str, act: str, register_title: str) -> str:
     title = fold(register_title)
     found = {code for code, stems in [("b", ("nascut", "naster")), ("m", ("casator", "cununa")), ("d", ("decedat", "decese", "morti"))] if any(s in title for s in stems)}
     return found.pop() if len(found) == 1 else ""
+
+
+def batch_starts(batches: list) -> list[list]:
+    """[[mediaId, first image number or None], ...] from batches.py's
+    [mediaId, name, page count, first image] lists. The first batch starts at
+    image 1; a missing start is derived from the previous batch's start + count."""
+    out, previous = [], None
+    for index, (media_id, _name, count, start) in enumerate(batches):
+        if start is None:
+            if index == 0:
+                start = 1
+            elif previous and previous[0] is not None and previous[1] is not None:
+                start = previous[0] + previous[1]
+        out.append([media_id, start])
+        previous = (start, count)
+    return out
+
+
+def image_page(starts: list[list], image: int):
+    """(batch index, page) of an image number, or None when it can't be placed
+    for sure. The JavaScript copy in site/index.html must stay identical (tests/pages.json)."""
+    best = None
+    for index, (_media, start) in enumerate(starts):
+        if start is not None and start <= image:
+            best = index
+    if best is None:
+        return None
+    if best + 1 < len(starts):
+        following = starts[best + 1][1]
+        if following is None or image >= following:
+            return None
+    return best, image - starts[best][1] + 1
+
+
+def load_batches(store: Path) -> dict[int, list[list]]:
+    latest: dict[int, dict] = {}
+    for path in sorted(store.glob("*/*.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            try:
+                item = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if item["id"] not in latest or not item.get("error"):
+                latest[item["id"]] = item
+    return {rid: batch_starts(item["batches"]) for rid, item in latest.items() if item.get("batches")}
 
 
 def load_catalogue(path: Path) -> dict[int, dict]:
@@ -239,6 +287,8 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=ROOT / "site" / "data" / "names")
     parser.add_argument("--catalogue", type=Path, default=ROOT / "site" / "data" / "catalogue.json")
     parser.add_argument("--exclusions", type=Path, default=ROOT / "privacy" / "exclusions.json")
+    parser.add_argument("--batches-store", type=Path, default=ROOT / "idx_store" / "batches",
+                        help="batches.py output (scanned batch PDFs per register)")
     parser.add_argument("--privacy-years", type=int, default=100)
     parser.add_argument("--max-kb", type=int, default=3000, help="split name shards above this raw size")
     args = parser.parse_args()
@@ -284,6 +334,11 @@ def main() -> None:
     prefix_text = json.dumps({str(k): v for k, v in sorted(prefixes.items())}, ensure_ascii=False, separators=(",", ":"))
     (args.out / "prefixes.json").write_text(prefix_text, encoding="utf-8")
     sizes["prefixes"] = len(gzip.compress(prefix_text.encode("utf-8"), 9))  # served gzip'd by Pages
+    registers_with_rows = set(row_record)
+    batches = {rid: starts for rid, starts in load_batches(args.batches_store).items() if rid in registers_with_rows}
+    batch_text = json.dumps({str(k): v for k, v in sorted(batches.items())}, separators=(",", ":"))
+    (args.out / "batches.json").write_text(batch_text, encoding="utf-8")
+    sizes["batches"] = len(gzip.compress(batch_text.encode("utf-8"), 9))
     total = sum(sizes.values())
     (args.out / "index.json").write_text(json.dumps({
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),

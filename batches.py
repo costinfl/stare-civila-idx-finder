@@ -19,6 +19,7 @@ All requests share the 1.25 s pace of server.archive_get. Results go to
     python batches.py --only IL- --limit 5            # sample
     python batches.py --store names-data/batches --max-minutes 55
     python batches.py --stats
+    python batches.py --retry-errors        # once everything has been tried
 """
 
 from __future__ import annotations
@@ -38,7 +39,7 @@ import server
 ROOT = Path(__file__).resolve().parent
 STORE = ROOT / "idx_store" / "batches"
 RUN_STAMP = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
-HEAD_LIMIT = 256 * 1024
+HEAD_LIMIT = 64 * 1024  # PDFsharp writes both within ~16 KB; other producers give nothing usable
 ANCHOR = re.compile(r"<a\b(?=[^>]*\bclass=['\"][^'\"]*\bopen_PDF_viewer\b)[^>]*\bhref=['\"]([^'\"]+)['\"][^>]*>(.*?)</a>", re.I | re.S)
 TITLE = re.compile(r"class=['\"]file_title['\"]\s+data-title=['\"]([^'\"]+)['\"]", re.I)
 COUNT = re.compile(rb"/Count\s+(\d+)")
@@ -114,8 +115,12 @@ def page_head(record_id: int, media_id: int) -> tuple[int | None, int | None, in
 
 
 def probe(record_id: int) -> dict:
+    """The first batch always starts at image 1, so only batches 2..n are read."""
     batches, read = [], 0
-    for media_id, name in batch_pdfs(record_id):
+    for index, (media_id, name) in enumerate(batch_pdfs(record_id)):
+        if index == 0:
+            batches.append([media_id, name, None, 1])
+            continue
         count, start, n = page_head(record_id, media_id)
         read += n
         batches.append([media_id, name, count, start])
@@ -131,10 +136,12 @@ def main() -> None:
     parser.add_argument("--sample", action="store_true", help="spread --limit evenly over each county")
     parser.add_argument("--max-minutes", type=float)
     parser.add_argument("--stats", action="store_true")
+    parser.add_argument("--retry-errors", action="store_true", help="probe again registers whose last attempt failed")
     args = parser.parse_args()
 
     catalogue = names.catalogue_by_county()
     if args.stats:
+        all_done = all_total = 0
         for county in server.COUNTIES:
             done = {}
             for path in sorted((args.store / names.code(county["prefix"])).glob("*.jsonl")):
@@ -145,9 +152,11 @@ def main() -> None:
                         continue
                     done[item["id"]] = item
             total = len(catalogue.get(county["prefix"], []))
+            all_done += len(done); all_total += total
             if done:
                 errors = sum(1 for i in done.values() if i.get("error"))
                 print(f"{county['name']:<16} {len(done):>6}/{total:<6} registers  {errors} errors")
+        print(f"{'Total':<16} {all_done:>6}/{all_total:<6} registers")
         return
 
     wanted = {p.upper() if p.endswith("-") else p.upper() + "-" for p in args.only or []}
@@ -166,7 +175,9 @@ def main() -> None:
                     item = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-                if not item.get("error"):
+                if item.get("error") and args.retry_errors:
+                    done.discard(item["id"])
+                else:
                     done.add(item["id"])
         todo = [r for r in records if r not in done]
         if args.limit and len(todo) > args.limit:
