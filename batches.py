@@ -15,9 +15,10 @@ All requests share the 1.25 s pace of server.archive_get: request starts are
 at least 1.25 s apart. The server takes 3-5 s to answer each one, so with
 --workers N up to N registers are probed at once (each register's own
 requests stay sequential); the pace of new requests is unchanged. When the
-server answers with a 5xx error or times out, every request pauses for 30 s,
-the failed one is retried once, and only one request runs at a time until the
-server has been quiet for 10 minutes. Results go to
+server answers with a 5xx error or times out, the register is recorded as an
+error (left for a later --retry-errors run), every request pauses for 30 s,
+and only one request runs at a time until the server has been quiet for 10
+minutes. Results go to
 <store>/<CC>/<run>.jsonl, one line per register:
     {"id": 13640365, "batches": [[399659, "…_01.PDF", 200, 1], [399660, "…_02.PDF", 216, 201], [399661, "…_03.PDF", 125, 417]]}
     (mediaId, file name, page count, image number of its first page; null when not found)
@@ -119,20 +120,16 @@ GATE = Gate()
 
 
 def transient(error: Exception) -> bool:
-    """Errors worth one retry after a pause: 5xx, timeouts, dropped or failed connections."""
+    """Signs the server is struggling: 5xx, timeouts, dropped or failed connections."""
     if isinstance(error, urllib.error.HTTPError):
         return error.code >= 500
     return isinstance(error, (urllib.error.URLError, TimeoutError, socket.timeout, ssl.SSLError, ConnectionError))
 
 
 def fetch(fn, pace: bool = True):
-    """Run one request through the gate; retry once after the pause if the server failed."""
-    try:
-        return GATE.request(fn, pace)
-    except Exception as error:
-        if not transient(error):
-            raise
-        return GATE.request(fn, pace)
+    """Run one request through the gate. Failures are not retried here: the
+    register is recorded as an error and refreshed by a later --retry-errors run."""
+    return GATE.request(fn, pace)
 
 
 def batch_pdfs(record_id: int) -> list[tuple[int, str]]:

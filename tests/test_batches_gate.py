@@ -57,23 +57,20 @@ class Recorder:
                 self.open -= 1
 
 
-# A 500 is retried once, after the pause, and then succeeds.
+# A 500 is not retried: it reaches the caller (the register is recorded as an
+# error), and the gate pauses and drops to 1 request at a time.
 fresh()
 fake = Recorder(fail={1: http(500)})
-started = time.monotonic()
-result = batches.fetch(fake)
-check("500 then success is retried", result == 2 and fake.calls == 2, f"result {result}, calls {fake.calls}")
-check("retry waits for the pause", fake.starts[1] - started >= batches.PAUSE_SECONDS, f"{fake.starts[1] - started:.2f}s")
-check("after an error only 1 request at a time", batches.GATE.allowed == 1, f"allowed {batches.GATE.allowed}")
-
-# Two 500s in a row: the error reaches the caller (the register is recorded as an error).
-fresh()
-fake = Recorder(fail={1: http(500), 2: http(503)})
 try:
     batches.fetch(fake)
-    check("two 500s raise", False, "no error raised")
+    check("500 raises", False, "no error raised")
 except urllib.error.HTTPError as error:
-    check("two 500s raise", error.code == 503 and fake.calls == 2, f"code {error.code}, calls {fake.calls}")
+    check("500 raises without a retry", error.code == 500 and fake.calls == 1, f"code {error.code}, calls {fake.calls}")
+check("after an error only 1 request at a time", batches.GATE.allowed == 1, f"allowed {batches.GATE.allowed}")
+started = time.monotonic()
+batches.fetch(Recorder())
+check("next request waits for the pause", time.monotonic() - started >= batches.PAUSE_SECONDS - 0.05,
+      f"{time.monotonic() - started:.2f}s")
 
 # A 404 is not retried and does not slow anything down.
 fresh()
@@ -100,7 +97,10 @@ gaps = [b - a for a, b in zip(fake.starts, fake.starts[1:])]
 check("request starts stay spaced", min(gaps) >= server.REQUEST_INTERVAL - 0.005, f"min gap {min(gaps):.3f}")
 
 fresh()
-batches.fetch(Recorder(fail={1: http(500)}))  # trips the back-off
+try:
+    batches.fetch(Recorder(fail={1: http(500)}))  # trips the back-off
+except urllib.error.HTTPError:
+    pass
 fake = Recorder(duration=0.1)
 threads = [threading.Thread(target=batches.fetch, args=(fake,)) for _ in range(4)]
 [t.start() for t in threads]
