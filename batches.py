@@ -14,7 +14,11 @@ number the batch starts with: image g is in the last batch whose start is
 All requests share the 1.25 s pace of server.archive_get: request starts are
 at least 1.25 s apart. The server takes 3-5 s to answer each one, so with
 --workers N up to N registers are probed at once (each register's own
-requests stay sequential); the pace of new requests is unchanged. Results go to
+requests stay sequential); the pace of new requests is unchanged. When the
+server answers with a 5xx error or times out, the register is recorded as an
+error (left for a later --retry-errors run), every request pauses for 30 s,
+and only one request runs at a time until the server has been quiet for 10
+minutes. Results go to
 <store>/<CC>/<run>.jsonl, one line per register:
     {"id": 13640365, "batches": [[399659, "…_01.PDF", 200, 1], [399660, "…_02.PDF", 216, 201], [399661, "…_03.PDF", 125, 417]]}
     (mediaId, file name, page count, image number of its first page; null when not found)
@@ -28,6 +32,9 @@ requests stay sequential); the pace of new requests is unchanged. Results go to
 from __future__ import annotations
 
 import argparse
+import socket
+import ssl
+import urllib.error
 import threading
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 import html
@@ -60,9 +67,74 @@ def wait_turn() -> None:
         server._last_request = time.monotonic()
 
 
+PAUSE_SECONDS = 30       # after a server error, no request starts for this long
+QUIET_SECONDS = 10 * 60  # error-free time before going back to --workers requests at once
+
+
+class Gate:
+    """Shared limit on open requests that backs off when the server struggles."""
+
+    def __init__(self) -> None:
+        self.cond = threading.Condition()
+        self.workers = self.allowed = 1
+        self.active = 0
+        self.pause_until = 0.0
+        self.last_error = None
+
+    def configure(self, workers: int) -> None:
+        with self.cond:
+            self.workers = self.allowed = max(1, workers)
+
+    def request(self, fn, pace: bool = True):
+        with self.cond:
+            while True:
+                now = time.monotonic()
+                if self.allowed < self.workers and self.last_error is not None and now - self.last_error >= QUIET_SECONDS:
+                    self.allowed = self.workers
+                    print(f"Quiet for {QUIET_SECONDS // 60} min; back to {self.workers} at once.", flush=True)
+                    self.cond.notify_all()
+                if self.active < self.allowed and now >= self.pause_until:
+                    break
+                self.cond.wait(timeout=max(0.05, min(1.0, self.pause_until - now)))
+            self.active += 1
+        try:
+            if pace:  # server.archive_get spaces its own requests
+                wait_turn()
+            return fn()
+        except Exception as error:
+            if transient(error):
+                with self.cond:
+                    self.last_error = time.monotonic()
+                    self.pause_until = self.last_error + PAUSE_SECONDS
+                    if self.allowed != 1 and self.workers > 1:
+                        print(f"Server error ({error}); pausing {PAUSE_SECONDS} s, 1 request at a time.", flush=True)
+                    self.allowed = 1
+            raise
+        finally:
+            with self.cond:
+                self.active -= 1
+                self.cond.notify_all()
+
+
+GATE = Gate()
+
+
+def transient(error: Exception) -> bool:
+    """Signs the server is struggling: 5xx, timeouts, dropped or failed connections."""
+    if isinstance(error, urllib.error.HTTPError):
+        return error.code >= 500
+    return isinstance(error, (urllib.error.URLError, TimeoutError, socket.timeout, ssl.SSLError, ConnectionError))
+
+
+def fetch(fn, pace: bool = True):
+    """Run one request through the gate. Failures are not retried here: the
+    register is recorded as an error and refreshed by a later --retry-errors run."""
+    return GATE.request(fn, pace)
+
+
 def batch_pdfs(record_id: int) -> list[tuple[int, str]]:
     """(mediaId, filename) of the register's PDFs other than the IDX, in name order."""
-    page, _ = server.archive_get(f"{server.ARCHIVE}/cota/?cid={record_id}")
+    page, _ = fetch(lambda: server.archive_get(f"{server.ARCHIVE}/cota/?cid={record_id}"), pace=False)
     found = []
     for href, block in ANCHOR.findall(page.decode("utf-8", errors="replace")):
         title = TITLE.search(block)
@@ -103,21 +175,23 @@ def first_image(head: bytes) -> int | None:
 
 def page_head(record_id: int, media_id: int) -> tuple[int | None, int | None, int]:
     """Stream the batch until its page count and first image are known; returns (count, start, bytes read)."""
-    wait_turn()
     url = f"{server.ARCHIVE}/api/media/file?id={record_id}&type=fisiere&mediaId={media_id}"
-    request = urllib.request.Request(url, headers={"User-Agent": server.USER_AGENT, "Accept": "*/*"})
-    head = b""
-    with urllib.request.urlopen(request, timeout=60) as response:
-        while len(head) < HEAD_LIMIT:
-            chunk = response.read(16 * 1024)
-            if not chunk:
-                break
-            head += chunk
-            count, start = root_page_count(head), first_image(head)
-            if count is not None and start is not None:
-                return count, start, len(head)  # leaving the with-block closes the connection
-    return root_page_count(head), first_image(head), len(head)
 
+    def read() -> tuple[int | None, int | None, int]:
+        request = urllib.request.Request(url, headers={"User-Agent": server.USER_AGENT, "Accept": "*/*"})
+        head = b""
+        with urllib.request.urlopen(request, timeout=60) as response:
+            while len(head) < HEAD_LIMIT:
+                chunk = response.read(16 * 1024)
+                if not chunk:
+                    break
+                head += chunk
+                count, start = root_page_count(head), first_image(head)
+                if count is not None and start is not None:
+                    return count, start, len(head)  # leaving the with-block closes the connection
+        return root_page_count(head), first_image(head), len(head)
+
+    return fetch(read)
 
 def probe(record_id: int) -> dict:
     """The first batch always starts at image 1, so only batches 2..n are read."""
@@ -199,6 +273,7 @@ def main() -> None:
             continue
         folder.mkdir(parents=True, exist_ok=True)
         with (folder / f"{RUN_STAMP}.jsonl").open("a", encoding="utf-8") as sink:
+            GATE.configure(args.workers)
             if not crawl(todo, sink, county["name"], deadline, max(1, args.workers)):
                 print("Time budget reached; run again to resume.")
                 return
