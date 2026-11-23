@@ -11,7 +11,10 @@ are named after the scans (…_0201.TIFF), so the first one gives the image
 number the batch starts with: image g is in the last batch whose start is
 <= g, at page g - start + 1.
 
-All requests share the 1.25 s pace of server.archive_get. Results go to
+All requests share the 1.25 s pace of server.archive_get: request starts are
+at least 1.25 s apart. The server takes 3-5 s to answer each one, so with
+--workers N up to N registers are probed at once (each register's own
+requests stay sequential); the pace of new requests is unchanged. Results go to
 <store>/<CC>/<run>.jsonl, one line per register:
     {"id": 13640365, "batches": [[399659, "…_01.PDF", 200, 1], [399660, "…_02.PDF", 216, 201], [399661, "…_03.PDF", 125, 417]]}
     (mediaId, file name, page count, image number of its first page; null when not found)
@@ -25,6 +28,8 @@ All requests share the 1.25 s pace of server.archive_get. Results go to
 from __future__ import annotations
 
 import argparse
+import threading
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 import html
 import json
 import re
@@ -143,6 +148,8 @@ def main() -> None:
     parser.add_argument("--max-minutes", type=float)
     parser.add_argument("--stats", action="store_true")
     parser.add_argument("--retry-errors", action="store_true", help="probe again registers whose last attempt failed")
+    parser.add_argument("--workers", type=int, default=1,
+                        help="registers probed at once (request starts stay >= 1.25 s apart)")
     args = parser.parse_args()
 
     catalogue = names.catalogue_by_county()
@@ -192,19 +199,48 @@ def main() -> None:
             continue
         folder.mkdir(parents=True, exist_ok=True)
         with (folder / f"{RUN_STAMP}.jsonl").open("a", encoding="utf-8") as sink:
-            for record_id in todo:
-                if deadline and time.monotonic() > deadline:
-                    print("Time budget reached; run again to resume.")
-                    return
-                try:
-                    result = probe(record_id)
-                except Exception as error:
-                    result = {"id": record_id, "error": str(error)[:300]}
-                sink.write(json.dumps(result, ensure_ascii=False, separators=(",", ":")) + "\n")
-                sink.flush()
-                print(f"  {county['name']} {record_id}: {[(b[1][-7:], b[2], b[3]) for b in result.get('batches', [])]} "
-                      f"{result.get('bytes', 0) // 1024} KB{' ERROR ' + result['error'] if 'error' in result else ''}", flush=True)
+            if not crawl(todo, sink, county["name"], deadline, max(1, args.workers)):
+                print("Time budget reached; run again to resume.")
+                return
 
+
+def safe_probe(record_id: int) -> dict:
+    try:
+        return probe(record_id)
+    except Exception as error:
+        return {"id": record_id, "error": str(error)[:300]}
+
+
+def crawl(todo: list[int], sink, county_name: str, deadline: float | None, workers: int) -> bool:
+    """Probe registers, at most `workers` at once; False if the time budget ran out.
+    No new register starts after the deadline; those already started finish."""
+    lock = threading.Lock()
+
+    def record(result: dict) -> None:
+        with lock:
+            sink.write(json.dumps(result, ensure_ascii=False, separators=(",", ":")) + "\n")
+            sink.flush()
+            print(f"  {county_name} {result['id']}: {[(b[1][-7:], b[2], b[3]) for b in result.get('batches', [])]} "
+                  f"{result.get('bytes', 0) // 1024} KB{' ERROR ' + result['error'] if 'error' in result else ''}", flush=True)
+
+    pending, queue, finished = set(), iter(todo), True
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        while True:
+            while len(pending) < workers:
+                if deadline and time.monotonic() > deadline:
+                    finished = False
+                    break
+                record_id = next(queue, None)
+                if record_id is None:
+                    break
+                pending.add(pool.submit(safe_probe, record_id))
+            if not pending:
+                return finished
+            done, pending = wait(pending, return_when=FIRST_COMPLETED)
+            for future in done:
+                record(future.result())
+            if not finished and not pending:
+                return False
 
 if __name__ == "__main__":
     main()

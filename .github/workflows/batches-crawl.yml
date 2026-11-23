@@ -2,10 +2,12 @@ name: Crawl batch PDFs
 
 # For every register, reads its record page and the first few KB of each scanned
 # batch PDF after the first (page count + first image number), so the site can
-# open an IDX image in the Archives' viewer at the right page. Same pacing and
-# shape as "Crawl IDX names": ~5 h runs in 55-minute chunks committed to the
-# names-data branch (batches/), each run starting the next until every register
-# is done. It shares the name crawl's concurrency group, so the two never run at
+# open an IDX image in the Archives' viewer at the right page. Request starts
+# are at least 1.25 s apart, as in "Crawl IDX names"; since the server takes
+# 3-5 s to answer each one, up to 3 registers are probed at once (--workers 3),
+# so at most 3 requests are open at a time. Same shape as "Crawl IDX names":
+# ~5 h runs in 55-minute chunks committed to the names-data branch (batches/),
+# each run starting the next until every register is done. It shares the name crawl's concurrency group, so the two never run at
 # the same time; start it by hand once the name crawl has finished.
 on:
   workflow_dispatch:
@@ -45,7 +47,7 @@ jobs:
           git -C names-data config user.email "41898299+github-actions[bot]@users.noreply.github.com"
           echo "started=$(date -u +%Y%m%dT%H%M%SZ)" >> "$GITHUB_OUTPUT"
           for chunk in $(seq 1 "${{ inputs.chunks || 5 }}"); do
-            python batches.py --store names-data/batches --max-minutes 55 | tail -n 3
+            python batches.py --store names-data/batches --workers 3 --max-minutes 55 | tail -n 3
             git -C names-data add batches
             if git -C names-data diff --cached --quiet; then
               echo "Nothing new; every register is done or unreachable."
@@ -67,7 +69,7 @@ jobs:
         run: |
           read -r done all < <(python batches.py --store names-data/batches --stats | tail -n 1 | awk '{split($2, a, "/"); print a[1], a[2]}')
           [ "$done" -lt "$all" ] && { echo "Registers still untried; retries wait until the end."; exit 0; }
-          python batches.py --store names-data/batches --retry-errors --max-minutes 55 | tail -n 3
+          python batches.py --store names-data/batches --workers 3 --retry-errors --max-minutes 55 | tail -n 3
           git -C names-data add batches
           if ! git -C names-data diff --cached --quiet; then
             summary=$(python batches.py --store names-data/batches --stats | tail -n 1)
