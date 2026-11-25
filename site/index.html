@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <script src="theme.js"></script>
+  <script src="lang.js"></script>
   <title>Stare Civilă IDX Finder</title>
   <meta name="description" content="Căutare în indexurile de nume (IDX) ale registrelor de stare civilă din Arhivele Naționale ale României.">
   <style>
@@ -22,13 +23,13 @@
     .lang { display:flex; gap:4px; flex-shrink:0; align-items:center; font-size:13px; }
     .lang button { background:var(--tab); color:var(--ink); padding:5px 9px; font-size:12px; }
     .lang button[aria-pressed="true"] { background:var(--blue); color:var(--paper); }
-    .lang a { margin-right:8px; }
+    .lang a { margin-inline-end:8px; }
     .tabs { display:flex; gap:6px; margin-top:18px; }
     .tabs button { background:var(--tab); color:var(--ink); border-radius:8px 8px 0 0; padding:9px 16px; font-size:14px; }
     .tabs button[aria-selected="true"] { background:var(--paper); color:var(--blue); box-shadow:inset 0 -2px 0 var(--blue); }
     .tabs button:hover { background:var(--paper); }
     .panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:18px; margin:0 0 18px; }
-    .tabs + div > .panel:first-child, .tabs + .panel { border-top-left-radius:0; }
+    .tabs + div > .panel:first-child, .tabs + .panel { border-start-start-radius:0; }
     .filters { display:grid; grid-template-columns:2fr 1fr .6fr .6fr; gap:12px; align-items:end; }
     .filters.names { grid-template-columns:1.6fr 1.2fr 1fr .9fr .6fr .6fr; }
     label { display:block; font-weight:650; font-size:13px; margin:0 0 5px; }
@@ -45,13 +46,13 @@
     button.link { background:none; color:var(--blue); padding:0; font-weight:500; font-size:12px; text-decoration:underline; }
     .table-wrap { overflow-x:auto; }
     table { border-collapse:collapse; width:100%; font-size:13.5px; }
-    th, td { text-align:left; vertical-align:top; padding:9px 8px; border-bottom:1px solid var(--line); }
+    th, td { text-align:start; vertical-align:top; padding:9px 8px; border-bottom:1px solid var(--line); }
     th { font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
     td.call { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.5px; white-space:nowrap; }
     td.nowrap { white-space:nowrap; }
     td.name { font-weight:600; }
     td.tools { white-space:nowrap; }
-    td.tools > * + * { margin-left:10px; }
+    td.tools > * + * { margin-inline-start:10px; }
     .sub { color:var(--muted); font-size:12px; word-break:break-all; }
     a { color:var(--blue); }
     mark { background:var(--mark); color:inherit; border-radius:2px; }
@@ -67,7 +68,7 @@
     .bar.small { height:6px; min-width:80px; margin:6px 0 0; }
     table.counties { margin-top:10px; font-size:12.5px; }
     table.counties td, table.counties th { padding:5px 8px; }
-    table.counties td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    table.counties td.num { text-align:end; font-variant-numeric:tabular-nums; white-space:nowrap; }
     .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--ink); color:var(--paper); padding:8px 14px; border-radius:8px; font-size:13px; opacity:0; transition:opacity .2s; pointer-events:none; }
     .toast.show { opacity:1; }
     [hidden] { display:none !important; }
@@ -93,7 +94,7 @@
         <h1>Stare Civilă IDX Finder</h1>
         <p data-i18n-html="intro"></p>
       </div>
-      <div class="lang"><a href="places.html" id="places-link" data-i18n="historical"></a><a href="about.html" id="about-link" data-i18n="about"></a><button class="theme-toggle" type="button"></button><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-hu" aria-pressed="false">HU</button><button id="lang-en" aria-pressed="false">EN</button></div>
+      <div class="lang"><a href="places.html" id="places-link" data-i18n="historical"></a><a href="about.html" id="about-link" data-i18n="about"></a><button class="theme-toggle" type="button"></button><span id="lang-menu"></span></div>
     </div>
   </header>
 
@@ -265,21 +266,185 @@ const I18N = {
     citeRegister: "Románia Nemzeti Levéltára, {county}, „{title}”, jelzet: {call}, {url} (megtekintve: {today}).",
     untitled: "(cím nélkül)",
   },
+  de: {
+    intro: 'Suche in den Namensverzeichnissen (<strong>IDX</strong>), die den Personenstandsregistern auf <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a> beigefügt sind. Die Suche läuft vollständig in Ihrem Browser auf einem vorab erstellten Index; öffnen Sie ein Register, um seine Bilder auf der Website des Archivs zu sehen.',
+    genLink: "Alle Kirchenbücher und Personenstandsregister aus {county} (mit oder ohne Namensverzeichnis) auf der Website des Archivs →",
+    about: "Über & Datenschutz", historical: "Historische Ortsnamen", hist: "Historische Namen einbeziehen", alsoSearched: " · auch gesucht: {names}", tabNames: "Namen", tabRegisters: "Register",
+    lblName: "Name", phName: "z. B. Popescu Ion, Schöfer, Kovács", lblPlace: "Ort", phPlace: "z. B. Hermannstadt",
+    lblCounty: "Kreis", allCounties: "Alle Kreise", lblEvent: "Ereignis", evAll: "Alle", evB: "Geburt", evM: "Heirat", evD: "Tod",
+    lblFrom: "Ab Jahr", lblTo: "Bis Jahr", exact: "Exakte Schreibweise", csv: "CSV herunterladen",
+    hintNames: "Jedes Wort passt auf den Anfang eines Namensteils, ohne Rücksicht auf diakritische Zeichen. Übliche Schreibvarianten sind eingeschlossen (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru) – mit „Exakte Schreibweise“ werden sie ausgeschlossen. Verwenden Sie mindestens 3 Buchstaben. Sie können auch nur nach einem Ort suchen; seine historischen Namen sind eingeschlossen (z. B. Sibiu – Hermannstadt). Kreis, Jahre und Ereignis grenzen die Ergebnisse ein.",
+    thCounty: "Kreis", thIndexed: "Erfasste Register", thNames: "Namen", thLastRun: "Letzter Lauf",
+    thName: "Name", thEvent: "Ereignis", thDate: "Datum", thPlace: "Ort", thAct: "Eintrag · Seite", thRegister: "Register", thImage: "Registerbild", openRegister: "Register auf der Website des Archivs öffnen", imageTitle: "Bild {g} öffnen — Teil {b}, Seite {p} — im Betrachter des Archivs",
+    lblQ: "Suche in Titel oder Signatur", phQ: "z. B. născuți Ploiești, PH-F-00006-209, decedați 1913",
+    thCall: "Signatur", thTitle: "Titel", thYears: "Jahre", thLevel: "Ebene",
+    back: "Zurück zu den Ergebnissen", more: "Mehr anzeigen (noch {n})", cite: "Zitieren", copied: "Zitat kopiert", entries: "Einträge", report: "Melden",
+    image: "Bild", act: "Eintrag", page: "S.", loadingCat: "Katalog wird geladen…", loadingNames: "Namensindex wird geladen…",
+    catError: "Der Katalog konnte nicht geladen werden ({e}).", noIndex: "Der Namensindex ist noch nicht veröffentlicht. Nutzen Sie bis dahin den Reiter Register.",
+    idle: "Bisher {entries} Namen aus {records} von {total} Registern erfasst. Geben Sie einen Namen oder einen Ort ein.",
+    needNameOrPlace: "Geben Sie einen Namen oder einen Ort ein; Kreis, Jahre und Ereignis grenzen die Ergebnisse nur ein.",
+    minLetters: "Verwenden Sie in einem der Wörter mindestens {n} Buchstaben.",
+    tooCommon: "„{w}“ ist zu häufig, um allein danach zu suchen ({mb} MB). Fügen Sie einen Nachnamen oder mehr Buchstaben hinzu.",
+    moreRegisters: "Nächste {n} Register laden (noch {left})", partialRegisters: " · aus {loaded} von {total} Registern dieses Ortes",
+    searching: "Suche… ({mb} MB)", loadError: "Der Index konnte nicht geladen werden ({e}).",
+    noNames: "Keine Ergebnisse. Versuchen Sie weniger Wörter, nur den Nachnamen oder weniger Filter.",
+    results: "{n} Ergebnisse · der Index umfasst {records} von {total} Registern",
+    registerView: "Alle {n} Einträge im Register {call}",
+    regCount: "{n} von {total} erfassten Registern", noRegs: "Keine passenden Register. Versuchen Sie weniger Wörter oder einen größeren Zeitraum.",
+    progress: "Indexfortschritt: {done} von {total} Registern ({pct} %)", progressTail: " · {names} Namen · letzter Lauf {date}", failed: "({n} fehlgeschlagen)",
+    footer: "{n} erfasste Register aus {c} Kreisen · Katalog erstellt am {date} aus der öffentlichen Suche des Archivs.",
+    attribution: 'Daten: Nationalarchiv Rumäniens, Lizenz <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.de" rel="noopener">CC BY-NC-ND 4.0</a>, unverändert wiedergegeben. Unabhängiges Projekt, nicht mit dem Nationalarchiv verbunden. <a href="about.html">Über & Datenschutz</a>.',
+    citeEntry: "{name}{event}{date}. Nationalarchiv Rumäniens, {county}, „{title}“, Signatur {call}{act}{page}{image}, {url} (abgerufen am {today}).",
+    citeRegister: "Nationalarchiv Rumäniens, {county}, „{title}“, Signatur {call}, {url} (abgerufen am {today}).",
+    untitled: "(ohne Titel)",
+  },
+  tr: {
+    intro: '<a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a> portalındaki nüfus kayıt defterlerine eklenmiş isim dizinlerinde (<strong>IDX</strong>) arama. Arama tamamen tarayıcınızda, önceden hazırlanmış bir dizin üzerinde çalışır; taranmış sayfaları görmek için defteri Arşiv sitesinde açın.',
+    genLink: "{county} iline ait tüm kilise ve nüfus kayıt defterleri (isim dizinli veya dizinsiz) Arşiv sitesinde →",
+    about: "Hakkında ve gizlilik", historical: "Tarihî yer adları", hist: "Tarihî adları dahil et", alsoSearched: " · ayrıca arandı: {names}", tabNames: "İsimler", tabRegisters: "Defterler",
+    lblName: "İsim", phName: "örn. Popescu Ion, Schöfer, Kovács", lblPlace: "Yer", phPlace: "örn. Constanța",
+    lblCounty: "İl (județ)", allCounties: "Tüm iller", lblEvent: "Olay", evAll: "Tümü", evB: "Doğum", evM: "Evlilik", evD: "Ölüm",
+    lblFrom: "Başlangıç yılı", lblTo: "Bitiş yılı", exact: "Tam yazım", csv: "CSV indir",
+    hintNames: "Her kelime, aksan işaretlerinden bağımsız olarak bir isim parçasının başıyla eşleşir. Yaygın yazım çeşitleri de dahildir (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru); bunları hariç tutmak için “Tam yazım”ı işaretleyin. En az 3 harf kullanın. Yalnızca yer adıyla da arayabilirsiniz; yerin tarihî adları da dahildir (örn. Constanța – Köstence). İl, yıllar ve olay sonuçları daraltır.",
+    thCounty: "İl", thIndexed: "Dizinlenen defterler", thNames: "İsimler", thLastRun: "Son tarama",
+    thName: "İsim", thEvent: "Olay", thDate: "Tarih", thPlace: "Yer", thAct: "Kayıt · sayfa", thRegister: "Defter", thImage: "Defter görüntüsü", openRegister: "Defteri Arşiv sitesinde aç", imageTitle: "{g}. görüntüyü aç — {b}. parça, {p}. sayfa — Arşiv görüntüleyicisinde",
+    lblQ: "Başlıkta veya arşiv numarasında ara", phQ: "örn. născuți Ploiești, PH-F-00006-209, decedați 1913",
+    thCall: "Arşiv no.", thTitle: "Başlık", thYears: "Yıllar", thLevel: "Düzey",
+    back: "Sonuçlara dön", more: "Daha fazla ({n} kaldı)", cite: "Kaynak göster", copied: "Kaynak kopyalandı", entries: "Kayıtlar", report: "Bildir",
+    image: "görüntü", act: "kayıt", page: "s.", loadingCat: "Katalog yükleniyor…", loadingNames: "İsim dizini yükleniyor…",
+    catError: "Katalog yüklenemedi ({e}).", noIndex: "İsim dizini henüz yayımlanmadı. Bu arada Defterler sekmesini kullanın.",
+    idle: "Şu ana kadar {total} defterin {records} tanesinden {entries} isim dizinlendi. Bir isim veya yer yazın.",
+    needNameOrPlace: "Bir isim veya yer yazın; il, yıllar ve olay yalnızca sonuçları daraltır.",
+    minLetters: "Kelimelerden birinde en az {n} harf kullanın.",
+    tooCommon: "“{w}” tek başına aranamayacak kadar yaygın ({mb} MB). Bir soyadı veya daha fazla harf ekleyin.",
+    moreRegisters: "Sonraki {n} defteri yükle ({left} kaldı)", partialRegisters: " · bu yerin {total} defterinden {loaded} tanesi yüklendi",
+    searching: "Aranıyor… ({mb} MB)", loadError: "Dizin yüklenemedi ({e}).",
+    noNames: "Sonuç yok. Daha az kelime, yalnızca soyadı veya daha az filtre deneyin.",
+    results: "{n} sonuç · dizin {total} defterin {records} tanesini kapsıyor",
+    registerView: "{call} defterindeki {n} kaydın tümü",
+    regCount: "Dizinlenmiş {total} defterden {n} tanesi", noRegs: "Eşleşen defter yok. Daha az kelime veya daha geniş bir yıl aralığı deneyin.",
+    progress: "Dizin ilerlemesi: {total} defterden {done} tanesi (%{pct})", progressTail: " · {names} isim · son tarama {date}", failed: "({n} başarısız)",
+    footer: "{c} ilden {n} dizinlenmiş defter · katalog, Arşivin herkese açık aramasından {date} tarihinde oluşturuldu.",
+    attribution: 'Veriler: Romanya Ulusal Arşivleri, <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.tr" rel="noopener">CC BY-NC-ND 4.0</a> lisansı, değiştirilmeden. Bağımsız bir projedir; Ulusal Arşivlerle bağlantılı değildir. <a href="about.html">Hakkında ve gizlilik</a>.',
+    citeEntry: "{name}{event}{date}. Romanya Ulusal Arşivleri, {county}, “{title}”, arşiv no. {call}{act}{page}{image}, {url} (erişim {today}).",
+    citeRegister: "Romanya Ulusal Arşivleri, {county}, “{title}”, arşiv no. {call}, {url} (erişim {today}).",
+    untitled: "(başlıksız)",
+  },
+  crh: {
+    intro: '<a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a> saytındaki ahali qayd defterlerine qoşulğan isim fihristlerinde (<strong>IDX</strong>) qıdıruv. Qıdıruv bütünley brauzeriñizde, evelden azırlanğan fihrist üzerinde çalışa; resimlerni körmek içün defterni Arhiv saytında açıñız.',
+    genLink: "{county} vilâyetiniñ bütün kilise ve ahali qayd defterleri (isim fihristi olğan ya da olmağan) Arhiv saytında →",
+    about: "Haqqında ve şahsiy malümat", historical: "Tarihiy yer adları", hist: "Tarihiy adlarnen", alsoSearched: " · daa qıdırıldı: {names}", tabNames: "İsimler", tabRegisters: "Defterler",
+    lblName: "İsim", phName: "meselâ Popescu Ion, Schöfer, Kovács", lblPlace: "Yer", phPlace: "meselâ Medgidia",
+    lblCounty: "Vilâyet (județ)", allCounties: "Bütün vilâyetler", lblEvent: "Vaqia", evAll: "Episi", evB: "Doğum", evM: "Evlenüv", evD: "Ölüm",
+    lblFrom: "Yıldan", lblTo: "Yılğa qadar", exact: "Tam yazılış", csv: "CSV yükle",
+    hintNames: "Er söz, diakritik işaretlerge baqmadan, isim parçasınıñ başına uyğun kele. Keñ tarqalğan yazılış variantları da kirsetile (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru); olarnı çıqarmaq içün «Tam yazılış»nı belgileñiz. Eñ az 3 arif qullanıñız. Tek yer adı boyunca da qıdırıp olasıñız; yerniñ tarihiy adları da kirsetile (meselâ Medgidia – Mecidiye). Vilâyet, yıllar ve vaqia neticelerni tarlata.",
+    thCounty: "Vilâyet", thIndexed: "Fihristlengen defterler", thNames: "İsimler", thLastRun: "Soñki tarama",
+    thName: "İsim", thEvent: "Vaqia", thDate: "Tarih", thPlace: "Yer", thAct: "Qayd · saife", thRegister: "Defter", thImage: "Defter resmi", openRegister: "Defterni Arhiv saytında aç", imageTitle: "{g}-nci resimni aç — {b}-nci qısım, {p}-nci saife — Arhivniñ körüvcisinde",
+    lblQ: "Serlevada ya da arhiv nomerinde qıdır", phQ: "meselâ născuți Ploiești, PH-F-00006-209, decedați 1913",
+    thCall: "Arhiv nomeri", thTitle: "Serleva", thYears: "Yıllar", thLevel: "Seviye",
+    back: "Neticelerge qaytuv", more: "Daa ziyade ({n} qaldı)", cite: "Menba köster", copied: "Menba kopiyalandı", entries: "Qaydlar", report: "Bildir",
+    image: "resim", act: "qayd", page: "s.", loadingCat: "Katalog yüklene…", loadingNames: "İsim fihristi yüklene…",
+    catError: "Katalog yüklenmedi ({e}).", noIndex: "İsim fihristi ale neşir etilmedi. Şimdilik Defterler bölügini qullanıñız.",
+    idle: "Şimdige qadar {total} defterden {records} defterniñ {entries} ismi fihristlendi. İsim ya da yer yazıñız.",
+    needNameOrPlace: "İsim ya da yer yazıñız; vilâyet, yıllar ve vaqia tek neticelerni tarlata.",
+    minLetters: "Sözlerniñ birinde eñ az {n} arif qullanıñız.",
+    tooCommon: "«{w}» yalıñız qıdırılmaq içün pek çoq rastkele ({mb} MB). Soyadı ya da daa ziyade arif qoşuñız.",
+    moreRegisters: "Soñraki {n} defterni yükle ({left} qaldı)", partialRegisters: " · bu yerniñ {total} defterinden {loaded} defter yüklendi",
+    searching: "Qıdırıla… ({mb} MB)", loadError: "Fihrist yüklenmedi ({e}).",
+    noNames: "Netice yoq. Daa az söz, tek soyadı ya da daa az filtr sınap baqıñız.",
+    results: "{n} netice · fihrist {total} defterden {records} defterni öz içine ala",
+    registerView: "{call} defteriniñ bütün {n} qaydı",
+    regCount: "Fihristlengen {total} defterden {n}", noRegs: "Uyğun defter yoq. Daa az söz ya da daa keñ yıl aralığı sınap baqıñız.",
+    progress: "Fihrist ilerleyişi: {total} defterden {done} ({pct}%)", progressTail: " · {names} isim · soñki tarama {date}", failed: "({n} muvafaqiyetsiz)",
+    footer: "{c} vilâyetten {n} fihristlengen defter · katalog Arhivniñ umumiy qıdıruvından {date} tarihında yapıldı.",
+    attribution: 'Malümat: Romaniya Milliy Arhivleri, <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="noopener">CC BY-NC-ND 4.0</a> litsenziyası, deñiştirilmeden. Mustaqil proekt, Milliy Arhivlerge bağlı degil. <a href="about.html">Haqqında ve şahsiy malümat</a>.',
+    citeEntry: "{name}{event}{date}. Romaniya Milliy Arhivleri, {county}, «{title}», arhiv nomeri {call}{act}{page}{image}, {url} (baqılğan tarih {today}).",
+    citeRegister: "Romaniya Milliy Arhivleri, {county}, «{title}», arhiv nomeri {call}, {url} (baqılğan tarih {today}).",
+    untitled: "(serlevasız)",
+  },
+  rom: {
+    intro: 'Rodipen ande anavenqe indèksura (<strong>IDX</strong>) kaj si phandle e civilone statusosqe registrenqe pe <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a>. O rodipen kerdol sa ande tumaro brauzeri, pe jekh indèkso kerdo anglal; putren o registro te dikhen lesqe imàžura pe Arhivaqi sàjta.',
+    genLink: "Sa e khangeriaqe thaj civilone statusosqe registre andar {county} (anavenqe indeksosa vaj bi lesqo) pe Arhivaqi sàjta →",
+    about: "Pa amende thaj personalo informàcia", historical: "Istoriqe anava", hist: "Vi e istoriqe anava", alsoSearched: " · rodisardilo vi: {names}", tabNames: "Anava", tabRegisters: "Registre",
+    lblName: "Anav", phName: "sar Popescu Ion, Schöfer, Kovács", lblPlace: "Than", phPlace: "sar Ploiești",
+    lblCounty: "Judèco", allCounties: "Sa e judècura", lblEvent: "So kerdilo", evAll: "Sa", evB: "Biandipen", evM: "Abijav", evD: "Meriben",
+    lblFrom: "Katar o berš", lblTo: "Ži ko berš", exact: "Čačo ramosaripen", csv: "Ćhin o CSV",
+    hintNames: "Svako lav maladjol e anavesqe kotoresqe anglune grafemenca, bi diakritikonenqo. Vi e buxle ramosaripnasqe variànte si andre (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru); čhin o „Čačo ramosaripen” te na aven. Ramos minimum 3 grafeme. Šaj rodes vi numa palo than; vi e thanesqe istoriqe anava si andre (sar Salonta – Nagyszalonta). O judèco, e berša thaj so kerdilo tikňaren e rezultatura.",
+    thCounty: "Judèco", thIndexed: "Indeksime registre", thNames: "Anava", thLastRun: "Palutno rodipen",
+    thName: "Anav", thEvent: "So kerdilo", thDate: "Data", thPlace: "Than", thAct: "Akto · patrin", thRegister: "Registro", thImage: "Registrosqo imàžo", openRegister: "Putar o registro pe Arhivaqi sàjta", imageTitle: "Putar o imàžo {g} — kotor {b}, patrin {p} — ando Arhivaqo dikhavno",
+    lblQ: "Rodipen ando šerutno lav vaj ande kòta", phQ: "sar născuți Ploiești, PH-F-00006-209, decedați 1913",
+    thCall: "Kòta", thTitle: "Šerutno lav", thYears: "Berša", thLevel: "Nivèlo",
+    back: "Palpale kaj e rezultatura", more: "Majbut ({n} ačhile)", cite: "Citisar", copied: "O citato kopisardilo", entries: "Ramosaripena", report: "Phen e došalin",
+    image: "imàžo", act: "akto", page: "p.", loadingCat: "Ladel pes o katalògo…", loadingNames: "Ladel pes o anavenqo indèkso…",
+    catError: "O katalògo našti ladisardilo ({e}).", noIndex: "O anavenqo indèkso inke nane publikime. Akana labar o kotor Registre.",
+    idle: "Ži akana {entries} anava andar {records} katar {total} registre. Ramos jekh anav vaj jekh than.",
+    needNameOrPlace: "Ramos jekh anav vaj jekh than; o judèco, e berša thaj so kerdilo numa tikňaren e rezultatura.",
+    minLetters: "Labar minimum {n} grafeme ande jekh lav.",
+    tooCommon: "„{w}” si but buxlo te rodes les korkoro ({mb} MB). Thov jekh familiaqo anav vaj majbut grafeme.",
+    moreRegisters: "Ladisar e avutne {n} registre ({left} ačhile)", partialRegisters: " · andar {loaded} katar {total} thanesqe registre",
+    searching: "Rodel pes… ({mb} MB)", loadError: "O indèkso našti ladisardilo ({e}).",
+    noNames: "Nisavo rezultato. Zumav majcera lava, numa o familiaqo anav vaj majcera filtrura.",
+    results: "{n} rezultatura · o indèkso astarel {records} katar {total} registre",
+    registerView: "Sa e {n} ramosaripena ando registro {call}",
+    regCount: "{n} katar {total} indeksime registre", noRegs: "Nisavo registro. Zumav majcera lava vaj buxleder beršenqo maškaripen.",
+    progress: "Indeksosqo agoripen: {done} katar {total} registre ({pct}%)", progressTail: " · {names} anava · palutno rodipen {date}", failed: "({n} bi-kerde)",
+    footer: "{n} indeksime registre andar {c} judècura · o katalògo kerdilo ko {date} andar Arhivaqo publiko rodipen.",
+    attribution: 'Informàcie: Rumuniaqe Nacionalone Arhive, licènca <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="noopener">CC BY-NC-ND 4.0</a>, bi paruvipnasqo. Korkoro proèkto, nane phandlo e Nacionalone Arhivenca. <a href="about.html">Pa amende thaj personalo informàcia</a>.',
+    citeEntry: "{name}{event}{date}. Rumuniaqe Nacionalone Arhive, {county}, „{title}”, kòta {call}{act}{page}{image}, {url} (dikhlo ko {today}).",
+    citeRegister: "Rumuniaqe Nacionalone Arhive, {county}, „{title}”, kòta {call}, {url} (dikhlo ko {today}).",
+    untitled: "(bi šerutne lavesqo)",
+  },
+  he: {
+    intro: 'חיפוש במפתחות השמות (<strong>IDX</strong>) המצורפים לפנקסי מרשם האוכלוסין ב־<a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a>. החיפוש פועל כולו בדפדפן, על מפתח שהוכן מראש; פתחו פנקס כדי לראות את הסריקות שלו באתר הארכיון. השמות עצמם רשומים באותיות לטיניות.',
+    genLink: "כל פנקסי הקהילות ומרשם האוכלוסין של {county} (עם מפתח שמות או בלעדיו) באתר הארכיון ←",
+    about: "אודות ופרטיות", historical: "שמות מקומות היסטוריים", hist: "כולל שמות היסטוריים", alsoSearched: " · חיפשנו גם: {names}", tabNames: "שמות", tabRegisters: "פנקסים",
+    lblName: "שם", phName: "לדוגמה Popescu Ion, Schöfer, Kovács", lblPlace: "מקום", phPlace: "לדוגמה Iași",
+    lblCounty: "מחוז", allCounties: "כל המחוזות", lblEvent: "אירוע", evAll: "הכול", evB: "לידה", evM: "נישואים", evD: "פטירה",
+    lblFrom: "משנת", lblTo: "עד שנת", exact: "כתיב מדויק", csv: "הורדת CSV",
+    hintNames: "כל מילה מתאימה לתחילת חלק מהשם, בלי להתחשב בסימנים דיאקריטיים. כתיבים חלופיים נפוצים כלולים (Ioan/Ion, Kovács/Covaci, Alexandru/Alecsandru); סמנו „כתיב מדויק” כדי להוציא אותם. השתמשו לפחות ב־3 אותיות לטיניות. אפשר לחפש גם לפי מקום בלבד; השמות ההיסטוריים של המקום כלולים (לדוגמה Salonta – Nagyszalonta). המחוז, השנים והאירוע מצמצמים את התוצאות.",
+    thCounty: "מחוז", thIndexed: "פנקסים במפתח", thNames: "שמות", thLastRun: "סריקה אחרונה",
+    thName: "שם", thEvent: "אירוע", thDate: "תאריך", thPlace: "מקום", thAct: "רישום · עמוד", thRegister: "פנקס", thImage: "סריקת הפנקס", openRegister: "פתיחת הפנקס באתר הארכיון", imageTitle: "פתיחת סריקה {g} — חלק {b}, עמוד {p} — במציג של הארכיון",
+    lblQ: "חיפוש בכותרת או בסימול", phQ: "לדוגמה născuți Ploiești, PH-F-00006-209, decedați 1913",
+    thCall: "סימול", thTitle: "כותרת", thYears: "שנים", thLevel: "רמה",
+    back: "חזרה לתוצאות", more: "עוד ({n} נותרו)", cite: "ציטוט", copied: "הציטוט הועתק", entries: "רישומים", report: "דיווח",
+    image: "סריקה", act: "רישום", page: "עמ׳", loadingCat: "טוען את הקטלוג…", loadingNames: "טוען את מפתח השמות…",
+    catError: "לא ניתן לטעון את הקטלוג ({e}).", noIndex: "מפתח השמות טרם פורסם. בינתיים השתמשו בלשונית הפנקסים.",
+    idle: "עד כה נכללו {entries} שמות מ־{records} מתוך {total} פנקסים. הקלידו שם או מקום.",
+    needNameOrPlace: "הקלידו שם או מקום; המחוז, השנים והאירוע רק מצמצמים את התוצאות.",
+    minLetters: "השתמשו לפחות ב־{n} אותיות באחת המילים.",
+    tooCommon: "„{w}” נפוץ מכדי לחפש אותו לבדו ({mb} MB). הוסיפו שם משפחה או עוד אותיות.",
+    moreRegisters: "טעינת {n} הפנקסים הבאים (נותרו {left})", partialRegisters: " · מתוך {loaded} מ־{total} הפנקסים של המקום",
+    searching: "מחפש… ({mb} MB)", loadError: "לא ניתן לטעון את המפתח ({e}).",
+    noNames: "אין תוצאות. נסו פחות מילים, רק את שם המשפחה או פחות מסננים.",
+    results: "{n} תוצאות · המפתח מכסה {records} מתוך {total} פנקסים",
+    registerView: "כל {n} הרישומים בפנקס {call}",
+    regCount: "{n} מתוך {total} פנקסים במפתח", noRegs: "לא נמצאו פנקסים. נסו פחות מילים או טווח שנים רחב יותר.",
+    progress: "התקדמות המפתח: {done} מתוך {total} פנקסים ({pct}%)", progressTail: " · {names} שמות · סריקה אחרונה {date}", failed: "({n} נכשלו)",
+    footer: "{n} פנקסים במפתח מ־{c} מחוזות · הקטלוג נבנה ב־{date} מהחיפוש הציבורי של הארכיון.",
+    attribution: 'נתונים: הארכיון הלאומי של רומניה, ברישיון <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.he" rel="noopener">CC BY-NC-ND 4.0</a>, מוצגים כפי שהם. מיזם עצמאי, ללא קשר לארכיון הלאומי. <a href="about.html">אודות ופרטיות</a>.',
+    citeEntry: "{name}{event}{date}. הארכיון הלאומי של רומניה, {county}, „{title}”, סימול {call}{act}{page}{image}, {url} (נצפה {today}).",
+    citeRegister: "הארכיון הלאומי של רומניה, {county}, „{title}”, סימול {call}, {url} (נצפה {today}).",
+    untitled: "(ללא כותרת)",
+  },
 };
 const EVENTS = { b: "evB", m: "evM", d: "evD" };
 const HU_COUNTIES = { "Alba": "Fehér", "Bihor": "Bihar", "Bistrița-Năsăud": "Beszterce-Naszód", "Brașov": "Brassó", "Caraș-Severin": "Krassó-Szörény",
   "Cluj": "Kolozs", "Covasna": "Kovászna", "Harghita": "Hargita", "Hunedoara": "Hunyad", "Maramureș": "Máramaros", "Mureș": "Maros",
   "Satu Mare": "Szatmár", "Sălaj": "Szilágy", "Sibiu": "Szeben", "Timiș": "Temes", "București": "Bukarest" };
-const LANGS = ["ro", "hu", "en"], LOCALES = { ro: "ro-RO", hu: "hu-HU", en: "en-GB" };
+// German names in use for counties of Transylvania, Banat, Bukovina and the capital.
+const DE_COUNTIES = { "Alba": "Weißenburg", "Bistrița-Năsăud": "Bistritz-Nassod", "Brașov": "Kronstadt", "Caraș-Severin": "Karasch-Severin",
+  "Cluj": "Klausenburg", "Hunedoara": "Eisenmarkt", "Maramureș": "Marmarosch", "Mureș": "Mieresch", "Satu Mare": "Sathmar",
+  "Sibiu": "Hermannstadt", "Suceava": "Suczawa", "Timiș": "Temesch", "București": "Bukarest" };
+const COUNTY_NAMES = { hu: HU_COUNTIES, de: DE_COUNTIES };
 
 const $ = (id) => document.getElementById(id);
 const PAGE = 200, MAX_DOWNLOAD = 30e6, MAX_REGISTERS = 40;
 let lang = "ro", data, byId = new Map(), names = null;
 
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
-function t(key, vars = {}) { return String(I18N[lang][key] ?? I18N.en[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? ""); }
-const fmt = (n) => Number(n).toLocaleString(LOCALES[lang]);
-function countyName(i) { const name = data.counties[i].name; return lang === "hu" && HU_COUNTIES[name] ? `${name} (${HU_COUNTIES[name]})` : name; }
+function t(key, vars = {}) { return String((I18N[lang] || I18N.ro)[key] ?? I18N.en[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? ""); }
+const fmt = (n) => Number(n).toLocaleString(SiteLang.locale(lang));
+function countyName(i) { const name = data.counties[i].name, alt = COUNTY_NAMES[lang]?.[name]; return alt ? `${name} (${alt})` : name; }
 const fold = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const words = (s) => fold(s).match(/[a-z]+/g) || [];
 
@@ -331,22 +496,21 @@ const recordUrl = (id) => `${data.source}/cota/?cid=${id}`;
 const today = () => new Date().toISOString().slice(0, 10);
 
 /* ---------- language ---------- */
+const langMenu = SiteLang.mount($("lang-menu"), (code) => setLang(code));
 function applyLang() {
-  document.documentElement.lang = lang;
+  lang = SiteLang.apply(lang);
   for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
   for (const el of document.querySelectorAll("[data-i18n-html]")) el.innerHTML = t(el.dataset.i18nHtml);
   for (const el of document.querySelectorAll("[data-i18n-ph]")) el.placeholder = t(el.dataset.i18nPh);
-  for (const l of LANGS) $(`lang-${l}`).setAttribute("aria-pressed", lang === l);
   $("about-link").href = `about.html#lang=${lang}`;
   $("places-link").href = `places.html#lang=${lang}`;
   for (const a of document.querySelectorAll('footer a[href="about.html"]')) a.href = `about.html#lang=${lang}`;
 }
 function setLang(value, rerun = true) {
-  lang = LANGS.includes(value) ? value : "ro"; store.set("lang", lang); applyLang();
+  lang = SiteLang.valid(value); applyLang();
   if (data) { renderFooter(); fillCountySelects(); renderGenLinks(); if (names) renderProgress(); }
   if (rerun) { writeHash(); runRegisters(); runNames(); }
 }
-for (const l of LANGS) $(`lang-${l}`).onclick = () => setLang(l);
 
 /* ---------- tabs and URL state ---------- */
 const FIELDS = { names: ["n-q", "n-place", "n-county", "n-event", "n-from", "n-to", "n-exact", "n-hist"], registers: ["q", "county", "from", "to"] };
@@ -361,7 +525,7 @@ const getField = (id) => $(id).type !== "checkbox" ? $(id).value : DEFAULT_ON.ha
 const setField = (id, v) => { if ($(id).type !== "checkbox") $(id).value = v || ""; else $(id).checked = DEFAULT_ON.has(id) ? v !== "0" : v === "1"; };
 function readHash() {
   const p = new URLSearchParams(location.hash.slice(1));
-  if (LANGS.includes(p.get("lang"))) lang = p.get("lang");
+  if (SiteLang.CODES.includes(p.get("lang"))) lang = p.get("lang");
   showTab(p.get("tab") === "registers" ? "registers" : "names", false);
   for (const id of [...FIELDS.names, ...FIELDS.registers]) setField(id, p.get(id));
   browseId = Number(p.get("reg")) || null;
@@ -571,7 +735,7 @@ function renderProgress() {
   const progress = names.progress || {}, total = data.items.length, pct = (n, d) => d ? 100 * n / d : 0;
   const latest = Object.values(progress).map(p => p.last_run).sort().pop();
   const strong = document.createElement("strong");
-  strong.textContent = t("progress", { done: fmt(names.records), total: fmt(total), pct: pct(names.records, total).toLocaleString(LOCALES[lang], { minimumFractionDigits: 1, maximumFractionDigits: 1 }) });
+  strong.textContent = t("progress", { done: fmt(names.records), total: fmt(total), pct: pct(names.records, total).toLocaleString(SiteLang.locale(lang), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) });
   $("progress-summary").replaceChildren(strong, t("progressTail", { names: fmt(names.entries), date: runDate(latest) || "—" }));
   $("progress-bar").style.width = `${pct(names.records, total)}%`;
   const body = $("progress-rows"); body.replaceChildren();
@@ -857,9 +1021,7 @@ for (const id of FIELDS.registers) $(id).addEventListener("input", regInput);
 window.addEventListener("hashchange", () => { readHash(); applyLang(); tab === "names" ? runNames() : runRegisters(); });
 
 (async () => {
-  const stored = store.get("lang");
-  const browser = (navigator.language || "").toLowerCase();
-  lang = LANGS.includes(stored) ? stored : browser.startsWith("hu") ? "hu" : browser.startsWith("ro") ? "ro" : "en";
+  lang = SiteLang.pick();
   readHash();
   applyLang();
   $("n-count").textContent = t("loadingCat");

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <script src="theme.js"></script>
+  <script src="lang.js"></script>
   <title>Nume istorice · Stare Civilă IDX Finder</title>
   <style>
     :root { color-scheme: light; --ink:#182431; --muted:#5d6d7c; --line:#dce3e8; --blue:#165d87; --blue-dark:#104665; --paper:#fff; --wash:#f3f6f8; --mark:#fff1b8; --focus:#165d8733; --tab:#e8eef2; }
@@ -17,7 +18,7 @@
     main { max-width:1180px; margin:0 auto; padding:28px 22px 56px; }
     .top { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; font-size:13px; }
     .lang { display:flex; gap:4px; align-items:center; }
-    .lang a { margin-right:8px; }
+    .lang a { margin-inline-end:8px; }
     .lang button { border:0; border-radius:7px; background:var(--tab); color:var(--ink); padding:5px 9px; font:inherit; font-size:12px; font-weight:650; cursor:pointer; }
     .lang button[aria-pressed="true"] { background:var(--blue); color:var(--paper); }
     h1 { font-size:clamp(24px,4vw,32px); line-height:1.2; letter-spacing:-.02em; margin:14px 0 6px; }
@@ -30,13 +31,13 @@
     .meta { margin-top:12px; color:var(--muted); font-size:13px; }
     .table-wrap { overflow-x:auto; }
     table { border-collapse:collapse; width:100%; font-size:13.5px; }
-    th, td { text-align:left; vertical-align:top; padding:9px 8px; border-bottom:1px solid var(--line); }
+    th, td { text-align:start; vertical-align:top; padding:9px 8px; border-bottom:1px solid var(--line); }
     th { font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
     td.ro { font-weight:600; }
     td.tools { white-space:nowrap; font-size:12.5px; }
-    td.tools > * + * { margin-left:10px; }
-    .tag { display:inline-block; font-size:10.5px; font-weight:650; color:var(--muted); border:1px solid var(--line); border-radius:4px; padding:0 4px; margin-right:4px; vertical-align:1px; }
-    span.n { margin-right:10px; display:inline-block; }
+    td.tools > * + * { margin-inline-start:10px; }
+    .tag { display:inline-block; font-size:10.5px; font-weight:650; color:var(--muted); border:1px solid var(--line); border-radius:4px; padding:0 4px; margin-inline-end:4px; vertical-align:1px; }
+    span.n { margin-inline-end:10px; display:inline-block; }
     td.ro span.n + span.n { font-weight:400; color:var(--muted); }
     a { color:var(--blue); }
     mark { background:var(--mark); color:inherit; border-radius:2px; }
@@ -60,7 +61,7 @@
 <main>
   <div class="top">
     <a href="index.html" id="back">← Stare Civilă IDX Finder</a>
-    <div class="lang"><a href="about.html" id="about-link" data-i18n="about"></a><button class="theme-toggle" type="button"></button><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-hu" aria-pressed="false">HU</button><button id="lang-en" aria-pressed="false">EN</button></div>
+    <div class="lang"><a href="about.html" id="about-link" data-i18n="about"></a><button class="theme-toggle" type="button"></button><span id="lang-menu"></span></div>
   </div>
   <header>
     <h1 data-i18n="title"></h1>
@@ -116,28 +117,81 @@ const I18N = {
     more: "Show more ({n} left)", none: "No places found.", loading: "Loading…", error: "Could not load the data ({e}).",
     footer: 'Names: <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), refreshed monthly. A missing or wrong form can be fixed directly on Wikidata (link on each row) or <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new" rel="noopener">reported here</a>.',
   },
+  de: {
+    title: "Historische Ortsnamen", about: "Über & Datenschutz",
+    intro: "Viele Orte in Rumänien hatten und haben weitere Namen – ungarische, deutsche, serbische, ukrainische, türkische und andere –, und alte Register verwenden sie oft. Suchen Sie nach einem beliebigen davon, um den heutigen rumänischen Namen und die anderen Formen zu finden.",
+    lblQ: "Ort suchen (in jeder Sprache)", phQ: "z. B. Hermannstadt, Nagyszalonta, Salonta", lblCounty: "Kreis", allCounties: "Alle Kreise",
+    thRo: "Rumänischer Name", thCounty: "Kreis", thOther: "Weitere Namen",
+    count: "{n} Orte", countFiltered: "{n} von {total} Orten", search: "In Registern suchen", wikidata: "Wikidata",
+    notBuilt: "Die Liste der historischen Namen wurde noch nicht erstellt; schauen Sie bald wieder vorbei.",
+    more: "Mehr anzeigen (noch {n})", none: "Keine Orte gefunden.", loading: "Wird geladen…", error: "Die Daten konnten nicht geladen werden ({e}).",
+    footer: 'Namen: <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), monatlich aktualisiert. Eine fehlende oder falsche Form kann direkt in Wikidata korrigiert (Link in jeder Zeile) oder <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new" rel="noopener">hier gemeldet</a> werden.',
+  },
+  tr: {
+    title: "Tarihî yer adları", about: "Hakkında ve gizlilik",
+    intro: "Romanya'daki birçok yerin başka adları da olmuştur ve hâlâ vardır – Macarca, Almanca, Sırpça, Ukraynaca, Türkçe ve diğerleri – ve eski defterler çoğu zaman bunları kullanır. Bugünkü Romence adı ve diğer biçimleri bulmak için bunlardan herhangi biriyle arayın.",
+    lblQ: "Bir yer arayın (herhangi bir dilde)", phQ: "örn. Köstence, Mecidiye, Hermannstadt", lblCounty: "İl", allCounties: "Tüm iller",
+    thRo: "Romence adı", thCounty: "İl", thOther: "Diğer adlar",
+    count: "{n} yer", countFiltered: "{total} yerden {n} tanesi", search: "Defterlerde ara", wikidata: "Wikidata",
+    notBuilt: "Tarihî adlar listesi henüz oluşturulmadı; lütfen yakında tekrar bakın.",
+    more: "Daha fazla ({n} kaldı)", none: "Yer bulunamadı.", loading: "Yükleniyor…", error: "Veriler yüklenemedi ({e}).",
+    footer: 'Adlar: <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), aylık güncellenir. Eksik veya yanlış bir biçim doğrudan Wikidata\'da düzeltilebilir (her satırdaki bağlantı) ya da <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new" rel="noopener">buradan bildirilebilir</a>.',
+  },
+  crh: {
+    title: "Tarihiy yer adları", about: "Haqqında ve şahsiy malümat",
+    intro: "Romaniyadaki çoq yerlerniñ başqa adları da olğan ve bar – macarca, nemse, sırpça, ukraince, türkçe, qırımtatarca ve başqaları – ve eski defterler olarnı sıq qullana. Bugünki romence adını ve diger şekillerini tapmaq içün olarnıñ er birinen qıdırıñız.",
+    lblQ: "Yer qıdır (er angi tilde)", phQ: "meselâ Mecidiye, Köstence, Hermannstadt", lblCounty: "Vilâyet", allCounties: "Bütün vilâyetler",
+    thRo: "Romence adı", thCounty: "Vilâyet", thOther: "Diger adlar",
+    count: "{n} yer", countFiltered: "{total} yerden {n}", search: "Defterlerde qıdır", wikidata: "Wikidata",
+    notBuilt: "Tarihiy adlar cedveli ale yapılmadı; yaqında kene baqıñız.",
+    more: "Daa ziyade ({n} qaldı)", none: "Yer tapılmadı.", loading: "Yüklene…", error: "Malümat yüklenmedi ({e}).",
+    footer: 'Adlar: <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), er ay yañartıla. Eksik ya da yañlış şekil doğrudan Wikidatada tüzetile bile (er satırdaki bağlantı) ya da <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new" rel="noopener">mında bildirile bile</a>.',
+  },
+  rom: {
+    title: "Thanenqe istoriqe anava", about: "Pa amende thaj personalo informàcia",
+    intro: "But thana andar i Rumunia sas len thaj si len vi aver anava – ungriqe, njamcikane, srbikane, ukrainikane, turkikane thaj aver – thaj e phurane registre but drom labaren len. Rode pe savo vi te aves, te arakhes o adivesutno rumunikano anav thaj e aver forme.",
+    lblQ: "Rode jekh than (ande savi vi čhib)", phQ: "sar Nagyszalonta, Hermannstadt, Salonta", lblCounty: "Judèco", allCounties: "Sa e judècura",
+    thRo: "Rumunikano anav", thCounty: "Judèco", thOther: "Aver anava",
+    count: "{n} thana", countFiltered: "{n} katar {total} thana", search: "Rode ande registre", wikidata: "Wikidata",
+    notBuilt: "E istoriqe anavenqi lista inke nane kerdi; boldin tut sigo.",
+    more: "Majbut ({n} ačhile)", none: "Nisavo than.", loading: "Ladel pes…", error: "E informàcie našti ladisardile ({e}).",
+    footer: 'Anava: <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), svako čhon kerdon neve. Jekh forma kaj nane vaj si došali šaj lačharel pes direkto pe Wikidata (o link pe svako rèndo) vaj <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new" rel="noopener">phenel pes kathe</a>.',
+  },
+  he: {
+    title: "שמות מקומות היסטוריים", about: "אודות ופרטיות",
+    intro: "למקומות רבים ברומניה היו, ועדיין יש, שמות נוספים – בהונגרית, בגרמנית, בסרבית, באוקראינית, בטורקית, ביידיש ועוד – ופנקסים ישנים משתמשים בהם לעיתים קרובות. חפשו לפי כל אחד מהם כדי למצוא את השם הרומני של היום ואת הצורות האחרות.",
+    lblQ: "חיפוש מקום (בכל שפה, באותיות לטיניות)", phQ: "לדוגמה Nagyszalonta, Hermannstadt, Salonta", lblCounty: "מחוז", allCounties: "כל המחוזות",
+    thRo: "שם רומני", thCounty: "מחוז", thOther: "שמות אחרים",
+    count: "{n} מקומות", countFiltered: "{n} מתוך {total} מקומות", search: "חיפוש בפנקסים", wikidata: "ויקינתונים",
+    notBuilt: "רשימת השמות ההיסטוריים טרם נבנתה; חזרו בקרוב.",
+    more: "עוד ({n} נותרו)", none: "לא נמצאו מקומות.", loading: "טוען…", error: "לא ניתן לטעון את הנתונים ({e}).",
+    footer: 'שמות: <a href="https://www.wikidata.org/" rel="noopener">ויקינתונים</a> (CC0), מתעדכנים מדי חודש. צורה חסרה או שגויה אפשר לתקן ישירות בוויקינתונים (קישור בכל שורה) או <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new" rel="noopener">לדווח כאן</a>.',
+  },
 };
 const HU_COUNTIES = { "Alba": "Fehér", "Bihor": "Bihar", "Bistrița-Năsăud": "Beszterce-Naszód", "Brașov": "Brassó", "Caraș-Severin": "Krassó-Szörény",
   "Cluj": "Kolozs", "Covasna": "Kovászna", "Harghita": "Hargita", "Hunedoara": "Hunyad", "Maramureș": "Máramaros", "Mureș": "Maros",
   "Satu Mare": "Szatmár", "Sălaj": "Szilágy", "Sibiu": "Szeben", "Timiș": "Temes", "București": "Bukarest" };
-const LANGS = ["ro", "hu", "en"], LOCALES = { ro: "ro-RO", hu: "hu-HU", en: "en-GB" };
+const DE_COUNTIES = { "Alba": "Weißenburg", "Bistrița-Năsăud": "Bistritz-Nassod", "Brașov": "Kronstadt", "Caraș-Severin": "Karasch-Severin",
+  "Cluj": "Klausenburg", "Hunedoara": "Eisenmarkt", "Maramureș": "Marmarosch", "Mureș": "Mieresch", "Satu Mare": "Sathmar",
+  "Sibiu": "Hermannstadt", "Suceava": "Suczawa", "Timiș": "Temesch", "București": "Bukarest" };
+const COUNTY_NAMES = { hu: HU_COUNTIES, de: DE_COUNTIES };
 const PAGE = 200;
 const $ = (id) => document.getElementById(id);
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 let lang = "ro", places = [], catalogueCounties = [], matches = [], shown = 0;
-const t = (key, vars = {}) => String(I18N[lang][key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
-const fmt = (n) => Number(n).toLocaleString(LOCALES[lang]);
+const t = (key, vars = {}) => String((I18N[lang] || I18N.ro)[key] ?? I18N.en[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+const fmt = (n) => Number(n).toLocaleString(SiteLang.locale(lang));
 const fold = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const words = (s) => fold(s).match(/[a-z]+/g) || [];
 // Same rules as variantKey in index.html / names_export.py (tests/variants.json).
 const VARIANT_RULES = [["x", "cs"], ["cs", "ci"], ["sz", "s"], ["zs", "j"], ["gy", "g"], ["ny", "n"], ["ly", "l"],
   ["ph", "f"], ["th", "t"], ["ck", "c"], ["k", "c"], ["q", "c"], ["w", "v"], ["y", "i"], ["ioa", "io"]];
 function variantKey(word) { for (const [a, b] of VARIANT_RULES) word = word.split(a).join(b); return word.replace(/(.)\1+/g, "$1"); }
-const countyLabel = (name) => lang === "hu" && HU_COUNTIES[name] ? `${name} (${HU_COUNTIES[name]})` : name;
+const countyLabel = (name) => COUNTY_NAMES[lang]?.[name] ? `${name} (${COUNTY_NAMES[lang][name]})` : name;
 
 function readHash() {
   const p = new URLSearchParams(location.hash.slice(1));
-  if (LANGS.includes(p.get("lang"))) lang = p.get("lang");
+  if (SiteLang.CODES.includes(p.get("lang"))) lang = p.get("lang");
   $("q").value = p.get("q") || ""; $("county").dataset.want = p.get("county") || "";
 }
 function writeHash() {
@@ -146,20 +200,19 @@ function writeHash() {
   if ($("county").value) p.set("county", $("county").value);
   history.replaceState(null, "", `#${p}`);
 }
+SiteLang.mount($("lang-menu"), (code) => { lang = code; applyLang(); run(); });
 function applyLang() {
-  document.documentElement.lang = lang;
+  lang = SiteLang.apply(lang);
   document.title = `${t("title")} · Stare Civilă IDX Finder`;
   for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
   for (const el of document.querySelectorAll("[data-i18n-html]")) el.innerHTML = t(el.dataset.i18nHtml);
   for (const el of document.querySelectorAll("[data-i18n-ph]")) el.placeholder = t(el.dataset.i18nPh);
-  for (const l of LANGS) $(`lang-${l}`).setAttribute("aria-pressed", lang === l);
   $("back").href = `index.html#lang=${lang}`; $("about-link").href = `about.html#lang=${lang}`;
   const select = $("county"), value = select.value || select.dataset.want || "";
   select.replaceChildren(new Option(t("allCounties"), ""));
   for (const name of catalogueCounties) select.append(new Option(countyLabel(name), name));
   select.value = value;
 }
-for (const l of LANGS) $(`lang-${l}`).onclick = () => { lang = l; store.set("lang", l); applyLang(); run(); };
 
 function run() {
   writeHash();
@@ -214,9 +267,7 @@ $("county").addEventListener("change", run);
 window.addEventListener("hashchange", () => { readHash(); applyLang(); run(); });
 
 (async () => {
-  const browser = (navigator.language || "").toLowerCase();
-  const stored = store.get("lang");
-  lang = LANGS.includes(stored) ? stored : browser.startsWith("hu") ? "hu" : browser.startsWith("ro") ? "ro" : "en";
+  lang = SiteLang.pick();
   readHash(); applyLang();
   $("count").textContent = t("loading");
   try {

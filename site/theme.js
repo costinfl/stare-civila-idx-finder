@@ -15,6 +15,11 @@
     ro: { system: "sistem", light: "luminoasă", dark: "întunecată", label: "Temă: {mode} (clic pentru {next})" },
     hu: { system: "rendszer", light: "világos", dark: "sötét", label: "Téma: {mode} (kattintson: {next})" },
     en: { system: "system", light: "light", dark: "dark", label: "Theme: {mode} (click for {next})" },
+    de: { system: "System", light: "hell", dark: "dunkel", label: "Design: {mode} (klicken für {next})" },
+    tr: { system: "sistem", light: "açık", dark: "koyu", label: "Tema: {mode} (tıklayın: {next})" },
+    crh: { system: "sistema", light: "açıq", dark: "qarañı", label: "Tema: {mode} (basıñız: {next})" },
+    rom: { system: "sistèma", light: "parno", dark: "kalo", label: "Tèma: {mode} (dab vaš: {next})" },
+    he: { system: "מערכת", light: "בהירה", dark: "כהה", label: "ערכת נושא: {mode} (לחיצה למעבר ל{next})" },
   };
   const svg = (body) => `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
   const ICONS = {
