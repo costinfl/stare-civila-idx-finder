@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <script src="theme.js"></script>
+  <script src="lang.js"></script>
   <title>Despre · Stare Civilă IDX Finder</title>
   <style>
     :root { color-scheme: light; --ink:#182431; --muted:#5d6d7c; --line:#dce3e8; --blue:#165d87; --paper:#fff; --wash:#f3f6f8; --tab:#e8eef2; }
@@ -33,7 +34,7 @@
 <main>
   <div class="top">
     <a href="index.html" id="back">← Stare Civilă IDX Finder</a>
-    <div class="lang"><button class="theme-toggle" type="button"></button><button id="lang-ro" aria-pressed="true">RO</button><button id="lang-hu" aria-pressed="false">HU</button><button id="lang-en" aria-pressed="false">EN</button></div>
+    <div class="lang"><button class="theme-toggle" type="button"></button><span id="lang-menu"></span></div>
   </div>
 
   <article lang="ro" id="content-ro">
@@ -54,7 +55,7 @@
 
       <h2>Cum sunt colectate datele</h2>
       <ul>
-        <li>Folosim doar căutarea publică a portalului și fișierele IDX atașate public registrelor; nu accesăm imaginile registrelor.</li>
+        <li>Folosim doar căutarea publică a portalului și fișierele atașate public registrelor: fișierele IDX și, pentru legăturile „Imagine registru”, primii câțiva kilobytes ai fișierelor PDF scanate (numărul de pagini și prima imagine), ca să deschidem vizualizatorul Arhivelor la pagina potrivită. Imaginile nu sunt descărcate integral și nu sunt păstrate.</li>
         <li>Cererile sunt făcute rar și politicos: cel mult una nouă la fiecare 1,25 secunde și niciodată mai mult de trei deodată, de un singur proces, cu un User-Agent care identifică proiectul și trimite la acest depozit.</li>
         <li>Fișierul <code>robots.txt</code> al portalului conține două reguli contradictorii pentru toți roboții (una interzice totul, una permite totul). Am considerat-o o configurare neintenționată și am limitat strict ritmul cererilor. <strong>Dacă Arhivele Naționale ne cer să ne oprim, oprim colectarea</strong> și, la cerere, eliminăm datele.</li>
       </ul>
@@ -95,7 +96,7 @@
 
       <h2>How the data is collected</h2>
       <ul>
-        <li>Only the portal’s public search and the IDX files publicly attached to registers are used; register images are not accessed.</li>
+        <li>Only the portal’s public search and the files publicly attached to registers are used: the IDX files and, for the “Record image” links, the first few kilobytes of the scanned PDF files (page count and first image), so the Archives’ viewer opens at the right page. The images are not downloaded in full and are not stored.</li>
         <li>Requests are rare and polite: at most one new request every 1.25 seconds and never more than three at once, from a single process, with a User-Agent that identifies the project and links to this repository.</li>
         <li>The portal’s <code>robots.txt</code> contains two contradictory rules for all robots (one disallows everything, one allows everything). We treat this as unintended and strictly limit our request rate. <strong>If the National Archives ask us to stop, we stop collecting</strong> and, on request, remove the data.</li>
       </ul>
@@ -136,7 +137,7 @@
 
       <h2>Hogyan gyűjtjük az adatokat?</h2>
       <ul>
-        <li>Csak a portál nyilvános keresőjét és az anyakönyvekhez nyilvánosan csatolt IDX fájlokat használjuk; az anyakönyvek képeit nem töltjük le.</li>
+        <li>Csak a portál nyilvános keresőjét és az anyakönyvekhez nyilvánosan csatolt fájlokat használjuk: az IDX fájlokat, valamint az „Anyakönyvi kép” hivatkozásokhoz a beszkennelt PDF fájlok első néhány kilobájtját (oldalszám és első kép), hogy a Levéltár megjelenítője a megfelelő oldalon nyíljon meg. A képeket nem töltjük le teljesen, és nem tároljuk.</li>
         <li>A kérések ritkák és kíméletesek: legfeljebb egy új kérés 1,25 másodpercenként, és egyszerre legfeljebb három, egyetlen folyamatból, olyan User-Agenttel, amely azonosítja a projektet és erre a tárolóra mutat.</li>
         <li>A portál <code>robots.txt</code> fájlja két egymásnak ellentmondó szabályt tartalmaz minden robot számára (az egyik mindent tilt, a másik mindent enged). Ezt nem szándékos beállításnak tekintjük, és szigorúan korlátozzuk a kérések ütemét. <strong>Ha a Nemzeti Levéltár kéri, leállítjuk a gyűjtést</strong>, és kérésre töröljük az adatokat.</li>
       </ul>
@@ -158,26 +159,224 @@
       <p class="muted">Kapcsolat: <a href="https://github.com/costinfl/stare-civila-idx-finder/issues" rel="noopener">GitHub issues</a>. Ez a szöveg nem jogi tanácsadás. A magyar fordítás javítását szívesen fogadjuk.</p>
     </div>
   </article>
+
+  <article lang="de" id="content-de" hidden>
+    <h1>Über das Projekt, Datenquelle und personenbezogene Daten</h1>
+    <div class="panel">
+      <h2>Was ist das?</h2>
+      <p>Ein unabhängiges, nichtkommerzielles Werkzeug, das die Suche in den Namensverzeichnissen (<strong>IDX</strong>-Dateien) erleichtert, die den vom Nationalarchiv Rumäniens auf <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a> veröffentlichten Personenstandsregistern beigefügt sind. Das Projekt ist <strong>nicht mit dem Nationalarchiv verbunden</strong> und spricht nicht in dessen Namen. Die Geschichte der deutschen Gemeinschaften in Rumänien – Siebenbürger Sachsen, Banater Schwaben, Bukowinadeutsche und andere – ist Teil der Geschichte des Landes; deshalb gibt es die Oberfläche auch auf Deutsch, und die deutschen Ortsnamen sind durchsuchbar.</p>
+
+      <p>Nur Register mit einer beigefügten IDX-Datei lassen sich hier nach Namen durchsuchen. Die übrigen Kirchenbücher und Personenstandsregister (die meisten) liegen nur als Scans vor; Sie können sie über den Link „Alle … Register aus …“, der bei der Wahl eines Kreises erscheint, auf der Website des Archivs durchblättern.</p>
+
+      <h2>Datenquelle und Lizenz</h2>
+      <ul>
+        <li>Die Daten stammen vom Portal des Nationalarchivs, das sie unter der Lizenz <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.de" rel="noopener">CC BY-NC-ND 4.0</a> verbreitet (Namensnennung, nicht kommerziell, keine Bearbeitungen).</li>
+        <li><strong>Namensnennung:</strong> Nationalarchiv Rumäniens, descopera.arhivelenationale.ro. Jedes Ergebnis verweist auf die Seite des Registers im Portal des Archivs.</li>
+        <li><strong>Unverändert:</strong> Namen, Orte, Daten, Eintrags- und Seitennummern sowie Bildnamen werden genau so angezeigt, wie sie in den IDX-Dateien stehen. Normalisierte Formen (ohne diakritische Zeichen, Schreibvarianten, sortierbare Daten, Art des Ereignisses) werden nur intern zum Suchen, Sortieren und Filtern verwendet.</li>
+        <li><strong>Nichtkommerziell:</strong> Die Website ist kostenlos, werbefrei und darf nicht kommerziell genutzt werden. Der Quellcode ist gemeinfrei (CC0); für die Daten gilt weiterhin die Lizenz des Archivs (siehe <a href="https://github.com/costinfl/stare-civila-idx-finder/blob/main/NOTICE.md" rel="noopener">NOTICE.md</a>).</li>
+      </ul>
+
+      <h2>Wie die Daten erhoben werden</h2>
+      <ul>
+        <li>Verwendet werden nur die öffentliche Suche des Portals und die öffentlich an die Register angehängten Dateien: die IDX-Dateien und, für die Links „Registerbild“, die ersten Kilobytes der gescannten PDF-Dateien (Seitenzahl und erstes Bild), damit der Betrachter des Archivs auf der richtigen Seite öffnet. Die Bilder werden weder vollständig heruntergeladen noch gespeichert.</li>
+        <li>Die Anfragen sind selten und rücksichtsvoll: höchstens eine neue Anfrage alle 1,25 Sekunden und nie mehr als drei gleichzeitig, aus einem einzigen Prozess, mit einem User-Agent, der das Projekt nennt und auf dieses Repository verweist.</li>
+        <li>Die Datei <code>robots.txt</code> des Portals enthält zwei widersprüchliche Regeln für alle Robots (eine verbietet alles, eine erlaubt alles). Wir betrachten das als unbeabsichtigt und begrenzen unsere Anfragerate streng. <strong>Wenn das Nationalarchiv uns bittet aufzuhören, beenden wir die Erhebung</strong> und entfernen auf Wunsch die Daten.</li>
+      </ul>
+
+      <h2>Personenbezogene Daten</h2>
+      <ul>
+        <li>Personenstandsregister enthalten personenbezogene Daten. Das Archiv veröffentlicht sie erst nach Ablauf der Schutzfristen.</li>
+        <li>Als zusätzliche Vorsichtsmaßnahme werden <strong>Einträge der letzten 100 Jahre hier nicht veröffentlicht</strong> (nach dem Datum des Ereignisses oder, falls es fehlt, nach dem letzten Jahr des Registers).</li>
+        <li>Die Website bittet Suchmaschinen, ihre Seiten nicht zu indexieren, und die Suche läuft nur in Ihrem Browser; wir erheben keine Besucherdaten und verwenden keine Cookies.</li>
+        <li><strong>Löschanträge:</strong> Wenn ein Eintrag Sie oder Angehörige betrifft und Sie ihn entfernen lassen möchten, <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new?template=removal-request.yml" rel="noopener">stellen Sie einen Löschantrag</a>. Die Entfernung gilt ab der nächsten Veröffentlichung der Website. Die Daten bleiben im Portal des Archivs verfügbar.</li>
+      </ul>
+
+      <h2>Historische Ortsnamen</h2>
+      <p>Die Seite <a href="places.html#lang=de">Historische Ortsnamen</a> und die Ortssuche verwenden die ungarischen, deutschen und weiteren Namen rumänischer Orte aus <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), monatlich aktualisiert. Eine fehlende oder falsche Form kann direkt in Wikidata korrigiert werden.</p>
+
+      <h2>Genauigkeit</h2>
+      <p>IDX-Verzeichnisse sind Abschriften und können Fehler enthalten; auch die automatische Auswertung der PDFs kann Fehler hinzufügen. Prüfen Sie immer das Originalbild des Registers. Fehler können mit der Schaltfläche <em>Melden</em> neben jedem Ergebnis gemeldet werden. Die Website wird „wie besehen“ bereitgestellt, ohne Gewähr.</p>
+
+      <p class="muted">Kontakt: <a href="https://github.com/costinfl/stare-civila-idx-finder/issues" rel="noopener">GitHub issues</a>. Dieser Text ist keine Rechtsberatung. Bei Abweichungen zwischen den Sprachfassungen gilt der rumänische Text. Korrekturen der Übersetzung sind willkommen.</p>
+    </div>
+  </article>
+
+  <article lang="tr" id="content-tr" hidden>
+    <h1>Hakkında, veri kaynağı ve kişisel veriler</h1>
+    <div class="panel">
+      <h2>Bu nedir?</h2>
+      <p>Romanya Ulusal Arşivlerinin <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a> portalında yayımladığı nüfus kayıt defterlerine eklenmiş isim dizinlerinde (<strong>IDX</strong> dosyaları) aramayı kolaylaştıran bağımsız ve ticari olmayan bir araçtır. Proje Ulusal Arşivlerle <strong>bağlantılı değildir</strong> ve onlar adına konuşmaz. Dobruca'daki Türk ve Tatar toplulukları başta olmak üzere Romanya'daki toplulukların tarihi ülkenin tarihinin bir parçasıdır; arayüzün Türkçe olmasının nedeni budur.</p>
+
+      <p>Burada yalnızca IDX dosyası eklenmiş defterlerde isimle arama yapılabilir. Diğer kilise ve nüfus kayıt defterlerinin (çoğunluğu) yalnızca taranmış görüntüleri vardır; bir il seçtiğinizde görünen “… iline ait tüm defterler” bağlantısıyla bunlara Arşiv sitesinde göz atabilirsiniz.</p>
+
+      <h2>Veri kaynağı ve lisans</h2>
+      <ul>
+        <li>Veriler, bunları <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.tr" rel="noopener">CC BY-NC-ND 4.0</a> lisansıyla (atıf, ticari olmayan, türetilemez) dağıtan Ulusal Arşivler portalından gelir.</li>
+        <li><strong>Atıf:</strong> Romanya Ulusal Arşivleri, descopera.arhivelenationale.ro. Her sonuç, defterin Arşiv portalındaki sayfasına bağlantı verir.</li>
+        <li><strong>Değiştirilmeden:</strong> isimler, yerler, tarihler, kayıt ve sayfa numaraları ile görüntü adları IDX dosyalarında göründükleri gibi gösterilir. Normalleştirilmiş biçimler (aksansız yazım, yazım çeşitleri, sıralanabilir tarihler, olay türü) yalnızca dahili olarak arama, sıralama ve filtreleme için kullanılır.</li>
+        <li><strong>Ticari olmayan:</strong> site ücretsizdir, reklam içermez ve ticari amaçla kullanılamaz. Kaynak kodu kamu malıdır (CC0); veriler Arşivin lisansına tabi kalır (bkz. <a href="https://github.com/costinfl/stare-civila-idx-finder/blob/main/NOTICE.md" rel="noopener">NOTICE.md</a>).</li>
+      </ul>
+
+      <h2>Veriler nasıl toplanır</h2>
+      <ul>
+        <li>Yalnızca portalın herkese açık araması ve defterlere herkese açık olarak eklenmiş dosyalar kullanılır: IDX dosyaları ve “Defter görüntüsü” bağlantıları için, Arşiv görüntüleyicisinin doğru sayfada açılması amacıyla taranmış PDF dosyalarının ilk birkaç kilobaytı (sayfa sayısı ve ilk görüntü). Görüntüler tamamen indirilmez ve saklanmaz.</li>
+        <li>İstekler seyrek ve özenlidir: her 1,25 saniyede en fazla bir yeni istek ve aynı anda asla üçten fazla değil; tek bir süreçten, projeyi tanıtan ve bu depoya bağlantı veren bir User-Agent ile.</li>
+        <li>Portalın <code>robots.txt</code> dosyası tüm robotlar için birbiriyle çelişen iki kural içerir (biri her şeyi yasaklar, biri her şeye izin verir). Bunu kasıtsız kabul ediyor ve istek hızımızı sıkı biçimde sınırlıyoruz. <strong>Ulusal Arşivler durmamızı isterse veri toplamayı durdururuz</strong> ve istek üzerine verileri kaldırırız.</li>
+      </ul>
+
+      <h2>Kişisel veriler</h2>
+      <ul>
+        <li>Nüfus kayıt defterleri kişisel veriler içerir. Arşivler bunları ancak koruma süreleri dolduktan sonra yayımlar.</li>
+        <li>Ek bir önlem olarak <strong>son 100 yılın kayıtları burada yayımlanmaz</strong> (olay tarihine göre veya tarih yoksa defterin son yılına göre).</li>
+        <li>Site, arama motorlarından sayfalarını dizine eklememelerini ister ve arama yalnızca tarayıcınızda çalışır; ziyaretçi verisi toplamayız ve çerez kullanmayız.</li>
+        <li><strong>Kaldırma talepleri:</strong> bir kayıt sizi veya bir yakınınızı ilgilendiriyorsa ve kaldırılmasını istiyorsanız <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new?template=removal-request.yml" rel="noopener">bir kaldırma talebi açın</a>. Kaldırma, sitenin bir sonraki yayımından itibaren geçerli olur. Veriler Arşiv portalında erişilebilir kalır.</li>
+      </ul>
+
+      <h2>Tarihî yer adları</h2>
+      <p><a href="places.html#lang=tr">Tarihî yer adları</a> sayfası ve yer araması, Romanya'daki yerleşim yerlerinin Macarca, Almanca, Türkçe ve diğer adlarını aylık güncellenen <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a>'dan (CC0) alır. Eksik veya yanlış bir biçim doğrudan Wikidata'da düzeltilebilir.</p>
+
+      <h2>Doğruluk</h2>
+      <p>IDX dizinleri birer aktarımdır ve hata içerebilir; PDF'lerden otomatik çıkarım da hata ekleyebilir. Her zaman defterin özgün görüntüsünü kontrol edin. Hatalar her sonucun yanındaki <em>Bildir</em> düğmesiyle bildirilebilir. Site “olduğu gibi”, hiçbir garanti olmaksızın sunulur.</p>
+
+      <p class="muted">İletişim: <a href="https://github.com/costinfl/stare-civila-idx-finder/issues" rel="noopener">GitHub issues</a>. Bu metin hukuki tavsiye değildir. Dil sürümleri arasında fark olursa Romence metin geçerlidir. Çeviriye yönelik düzeltmeler memnuniyetle karşılanır.</p>
+    </div>
+  </article>
+
+  <article lang="crh" id="content-crh" hidden>
+    <h1>Haqqında, malümat menbası ve şahsiy malümat</h1>
+    <div class="panel">
+      <h2>Bu ne?</h2>
+      <p>Romaniya Milliy Arhivleriniñ <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a> saytında neşir etken ahali qayd defterlerine qoşulğan isim fihristlerinde (<strong>IDX</strong> fayllarında) qıdıruvnı qolaylaştırğan mustaqil ve ticariy olmağan bir alet. Proekt Milliy Arhivlerge <strong>bağlı degil</strong> ve olarnıñ adından laf etmey. Dobrucadaki qırımtatar cemaatiniñ tarihı memleket tarihınıñ bir parçasıdır; interfeysniñ qırımtatarca olmasınıñ sebebi budır.</p>
+
+      <p>Mında tek IDX faylı qoşulğan defterlerde isimnen qıdırmaq mümkün. Diger kilise ve ahali qayd defterleriniñ (çoqusınıñ) tek skanerlengen resimleri bar; vilâyet saylağanıñızda körüngen «… bütün defterleri» bağlantısınen olarnı Arhiv saytında baqıp olasıñız.</p>
+
+      <h2>Malümat menbası ve litsenziya</h2>
+      <ul>
+        <li>Malümat, onı <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="noopener">CC BY-NC-ND 4.0</a> litsenziyasınen (müellifni köstermek, ticariy olmağan, deñiştirilmeden) tarqatqan Milliy Arhivler saytından alına.</li>
+        <li><strong>Menba:</strong> Romaniya Milliy Arhivleri, descopera.arhivelenationale.ro. Er netice defterniñ Arhiv saytındaki saifesine bağlana.</li>
+        <li><strong>Deñiştirilmeden:</strong> isimler, yerler, tarihlar, qayd ve saife nomerleri ve resim adları IDX fayllarında nasıl olsa, öyle kösterile. Normalleştirilgen şekiller (diakritik işaretsiz yazılış, yazılış variantları, sıralanğan tarihlar, vaqia türü) tek içeride qıdıruv, sıralav ve filtrlev içün qullanıla.</li>
+        <li><strong>Ticariy olmağan:</strong> sayt parasız, reklamasız ve ticariy maqsatnen qullanılamay. Menba kod umumiy mülktir (CC0); malümat Arhivniñ litsenziyası altında qala (baqıñız: <a href="https://github.com/costinfl/stare-civila-idx-finder/blob/main/NOTICE.md" rel="noopener">NOTICE.md</a>).</li>
+      </ul>
+
+      <h2>Malümat nasıl toplana</h2>
+      <ul>
+        <li>Tek saytnıñ umumiy qıdıruvı ve defterlerge açıq qoşulğan fayllar qullanıla: IDX faylları ve «Defter resmi» bağlantıları içün, Arhivniñ körüvcisi doğru saifede açılsın dep, skanerlengen PDF fayllarınıñ ilk bir qaç kilobaytı (saife sayısı ve ilk resim). Resimler tolusınen yüklenmey ve saqlanmay.</li>
+        <li>Soravlar siyrek ve diqqatlı: er 1,25 saniyede eñ çoq bir yañı sorav ve bir vaqıtta asla üçten ziyade degil; bir tek protsessten, proektni tanıtqan ve bu depoğa bağlanğan User-Agent ile.</li>
+        <li>Saytnıñ <code>robots.txt</code> faylında bütün robotlar içün biri-birine zıd eki qayde bar (biri episini yasaq ete, biri episine izin bere). Biz bunı tesadüfiy sayamız ve soravlarımıznıñ sıqlığını qattı sıñırlaymız. <strong>Milliy Arhivler toqtamamıznı rica etse, malümat toplavnı toqtatamız</strong> ve rica üzerine malümatnı siliriz.</li>
+      </ul>
+
+      <h2>Şahsiy malümat</h2>
+      <ul>
+        <li>Ahali qayd defterlerinde şahsiy malümat bar. Arhivler olarnı tek qorçalav müddetleri tamam olğan soñ neşir ete.</li>
+        <li>Ziyade ihtiyat olaraq <strong>soñki 100 yılnıñ qaydları mında neşir etilmey</strong> (vaqia tarihına köre ya da tarih yoq olsa, defterniñ soñki yılına köre).</li>
+        <li>Sayt qıdıruv sistemalarından saifelerini fihristke kirsetmemelerini rica ete ve qıdıruv tek brauzeriñizde çalışa; ziyaretçi malümatını toplamaymız ve cookie qullanmaymız.</li>
+        <li><strong>Silüv ricaları:</strong> bir qayd sizge ya da aqrabañızğa ait olsa ve onı silmek isteseñiz, <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new?template=removal-request.yml" rel="noopener">silüv ricası açıñız</a>. Silüv saytnıñ kelecek neşirinden itibaren keçerli ola. Malümat Arhiv saytında qala.</li>
+      </ul>
+
+      <h2>Tarihiy yer adları</h2>
+      <p><a href="places.html#lang=crh">Tarihiy yer adları</a> saifesi ve yer qıdıruvı Romaniyadaki yerleşken yerlerniñ macarca, nemse, türkçe, qırımtatarca ve diger adlarını er ay yañartılğan <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a>dan (CC0) ala. Eksik ya da yañlış şekil doğrudan Wikidatada tüzetile bile.</p>
+
+      <h2>Doğrulıq</h2>
+      <p>IDX fihristleri köçürmelerdir ve hatalar olabilir; PDF fayllarından avtomatik çıqaruv da hatalar qoşabilir. Er vaqıt defterniñ asıl resmini teşkeriñiz. Hatalarnı er neticeniñ yanındaki <em>Bildir</em> dögmesinen bildirip olasıñız. Sayt «olğanı kibi», kefaletsiz berile.</p>
+
+      <p class="muted">Bağlantı: <a href="https://github.com/costinfl/stare-civila-idx-finder/issues" rel="noopener">GitHub issues</a>. Bu metin hukuqiy meslehat degil. Til variantları arasında farq olsa, romence metin keçerli. Bu tercime tüzetilmekte; tüzetüv teklifleriñizni bekleymiz.</p>
+    </div>
+  </article>
+
+  <article lang="rom" id="content-rom" hidden>
+    <h1>Pa amende, e informàciaqo izvoro thaj personalo informàcia</h1>
+    <div class="panel">
+      <h2>So si kadava?</h2>
+      <p>Jekh korkoro thaj bikomercialo instrumènto kaj lokhărel o rodipen ande anavenqe indèksura (<strong>IDX</strong> fàjlura) kaj si phandle e civilone statusosqe registrenqe, publikime katar e Rumuniaqe Nacionalone Arhive pe <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a>. O proèkto <strong>nane phandlo</strong> e Nacionalone Arhivenca thaj na vakerel ande lengo anav. E rromenqi historia si kotor andar e themesqi historia; vaš kodo o interfèjso si vi rromanes.</p>
+
+      <p>Kathe šaj rodes palo anav numa ande registre kaj si len jekh IDX fàjlo. E aver khangeriaqe thaj civilone statusosqe registre (e majbut) si len numa skanime imàžura; šaj dikhes len pe Arhivaqi sàjta katar o link „Sa e … registre andar …”, kaj sikadol kana alos jekh judèco.</p>
+
+      <h2>E informàciaqo izvoro thaj i licènca</h2>
+      <ul>
+        <li>E informàcie aven katar e Nacionalone Arhivenqo portàlo, kaj ulavel len tela i licènca <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="noopener">CC BY-NC-ND 4.0</a> (te phenel pes o autoro, bikomercialo, bi paruvipnasqo).</li>
+        <li><strong>O izvoro:</strong> Rumuniaqe Nacionalone Arhive, descopera.arhivelenationale.ro. Svako rezultato sikavel karing e registrosqi patrin pe Arhivaqo portàlo.</li>
+        <li><strong>Bi paruvipnasqo:</strong> e anava, e thana, e date, e aktonenqe thaj patrinenqe numere thaj e imažurenqe anava sikadon sar si ande IDX fàjlura. E normalizime forme (bi diakritikonenqo, ramosaripnasqe variànte, date te šaj thoven pes ando rèndo, so kerdilo) labaren pes numa andral, vaš o rodipen, o rèndo thaj o filtripen.</li>
+        <li><strong>Bikomercialo:</strong> i sàjta si bi lovenqo, bi reklamenqo thaj našti labarel pes vaš komèrco. O kòdo si publiko domèno (CC0); e informàcie ačhon tela e Arhivaqi licènca (dikh <a href="https://github.com/costinfl/stare-civila-idx-finder/blob/main/NOTICE.md" rel="noopener">NOTICE.md</a>).</li>
+      </ul>
+
+      <h2>Sar kidenpe e informàcie</h2>
+      <ul>
+        <li>Labaras numa e portalosqo publiko rodipen thaj e fàjlura phandle publiko e registrenqe: e IDX fàjlura thaj, vaš e linkura „Registrosqo imàžo”, e angluna xanci kilobàjtura andar e skanime PDF fàjlura (e patrinenqo numero thaj o angluno imàžo), te putardol o Arhivaqo dikhavno pe čači patrin. E imàžura na ćhinen pes sa thaj na garaven pes.</li>
+        <li>E mangimata si rùjave thaj pativale: maximum jekh nevo mangipen svako 1,25 sekùnde thaj nikana majbut sar trin ande jekh drom, katar jekh korkoro procèso, jekhe User-Agentosa kaj phenel o proèkto thaj sikavel karing kadava depozito.</li>
+        <li>E portalosqo fàjlo <code>robots.txt</code> si les duj kontradiktorikane règuli vaš sa e ròbotura (jekh ačhavel sa, jekh mukhel sa). Dikhas kava sar bigodăqo thaj zurales tikňaras amare mangimatenqo ritmo. <strong>Te mangen e Nacionalone Arhive te ačhas, ačhas o kidipen</strong> thaj, te mangel pes, khosas e informàcie.</li>
+      </ul>
+
+      <h2>Personalo informàcia</h2>
+      <ul>
+        <li>E civilone statusosqe registre si len personalo informàcia. E Arhive publikisaren len numa palo agor e arakhipnasqe vaxtesqo.</li>
+        <li>Vaš majbut arakhipen, <strong>e ramosaripena andar e palutne 100 berša na publikisaren pes kathe</strong> (pali data kana kerdilo vaj, te nane, palo registrosqo palutno berš).</li>
+        <li>I sàjta mangel katar e rodipnasqe motòrura te na indeksisaren lače patrina, thaj o rodipen kerdol numa ande tumaro brauzeri; na kidas informàcia pa e dikhavne thaj na labaras cookies.</li>
+        <li><strong>Mangimata te khosel pes:</strong> te jekh ramosaripen si pa tumende vaj pa jekh njamo thaj kamen te khosel pes, <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new?template=removal-request.yml" rel="noopener">putren jekh mangipen</a>. O khosipen dikhlol katar i avutni publikàcia e sajtaqi. E informàcie ačhon pe Arhivaqo portàlo.</li>
+      </ul>
+
+      <h2>Thanenqe istoriqe anava</h2>
+      <p>I patrin <a href="places.html#lang=rom">Istoriqe anava</a> thaj o thanesqo rodipen labaren e ungriqe, njamcikane thaj aver anava e rumunikane thanenqe andar <a href="https://www.wikidata.org/" rel="noopener">Wikidata</a> (CC0), kerdon neve svako čhon. Jekh forma kaj nane vaj si došali šaj lačharel pes direkto pe Wikidata.</p>
+
+      <h2>Čačipen</h2>
+      <p>E IDX indèksura si ramosarde palpale thaj šaj si len došali; vi o automatikano kidipen andar e PDF-ura šaj anel došali. Sagda dikhen o originalo imàžo e registrosqo. E došali šaj phenen pes e butonosa <em>Phen e došalin</em> paša svako rezultato. I sàjta dindol „sar si”, bi garanciaqo.</p>
+
+      <p class="muted">Kontàkto: <a href="https://github.com/costinfl/stare-civila-idx-finder/issues" rel="noopener">GitHub issues</a>. Kadava tèksto nane juridikano doš. Te si diferènce maškar e čhiba, o rumunikano tèksto si o čačo. Kava anglipen si ande lačharipen; šukar avel amenqe svako lačharipen.</p>
+    </div>
+  </article>
+
+  <article lang="he" id="content-he" dir="rtl" hidden>
+    <h1>אודות, מקור הנתונים ומידע אישי</h1>
+    <div class="panel">
+      <h2>מה זה</h2>
+      <p>כלי עצמאי ולא מסחרי שמקל על החיפוש במפתחות השמות (קובצי <strong>IDX</strong>) המצורפים לפנקסי מרשם האוכלוסין שפרסם הארכיון הלאומי של רומניה באתר <a href="https://descopera.arhivelenationale.ro/" rel="noopener">Descoperă Arhivele Naționale</a>. המיזם <strong>אינו קשור</strong> לארכיון הלאומי ואינו מדבר בשמו. תולדות הקהילות היהודיות ברומניה הן חלק מתולדות הארץ, ולכן הממשק זמין גם בעברית. השמות בפנקסים עצמם כתובים באותיות לטיניות.</p>
+
+      <p>כאן אפשר לחפש לפי שם רק בפנקסים שמצורף אליהם קובץ IDX. שאר פנקסי הקהילות ומרשם האוכלוסין (רובם) זמינים כסריקות בלבד; אפשר לעיין בהם באתר הארכיון דרך הקישור „כל הפנקסים של …” שמופיע כשבוחרים מחוז.</p>
+
+      <h2>מקור הנתונים והרישיון</h2>
+      <ul>
+        <li>הנתונים מגיעים מהפורטל של הארכיון הלאומי, המפיץ אותם ברישיון <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.he" rel="noopener">CC BY-NC-ND 4.0</a> (ייחוס, שימוש לא מסחרי, ללא יצירות נגזרות).</li>
+        <li><strong>ייחוס:</strong> הארכיון הלאומי של רומניה, descopera.arhivelenationale.ro. כל תוצאה מקשרת לדף הפנקס בפורטל הארכיון.</li>
+        <li><strong>ללא שינוי:</strong> השמות, המקומות, התאריכים, מספרי הרישום והעמודים ושמות הסריקות מוצגים בדיוק כפי שהם מופיעים בקובצי ה־IDX. צורות מנורמלות (ללא סימנים דיאקריטיים, כתיבים חלופיים, תאריכים למיון, סוג האירוע) משמשות רק באופן פנימי לחיפוש, למיון ולסינון.</li>
+        <li><strong>לא מסחרי:</strong> האתר חינמי, ללא פרסומות, ואין להשתמש בו למטרות מסחריות. קוד המקור הוא נחלת הכלל (CC0); הנתונים נשארים תחת רישיון הארכיון (ראו <a href="https://github.com/costinfl/stare-civila-idx-finder/blob/main/NOTICE.md" rel="noopener">NOTICE.md</a>).</li>
+      </ul>
+
+      <h2>איך הנתונים נאספים</h2>
+      <ul>
+        <li>נעשה שימוש רק בחיפוש הציבורי של הפורטל ובקבצים המצורפים לפנקסים באופן ציבורי: קובצי ה־IDX, ועבור קישורי „סריקת הפנקס” — הקילובייטים הראשונים של קובצי ה־PDF הסרוקים (מספר העמודים והסריקה הראשונה), כדי שהמציג של הארכיון ייפתח בעמוד הנכון. הסריקות אינן מורדות במלואן ואינן נשמרות.</li>
+        <li>הבקשות מעטות ומתונות: לכל היותר בקשה חדשה אחת בכל 1.25 שניות ולעולם לא יותר משלוש בו־זמנית, מתהליך יחיד, עם User-Agent המזהה את המיזם ומקשר למאגר זה.</li>
+        <li>קובץ ה־<code>robots.txt</code> של הפורטל מכיל שני כללים סותרים לכל הרובוטים (אחד אוסר הכול, אחד מתיר הכול). אנו רואים בכך הגדרה לא מכוונת ומגבילים בקפידה את קצב הבקשות. <strong>אם הארכיון הלאומי יבקש מאיתנו להפסיק, נפסיק את האיסוף</strong> ולפי בקשה נסיר את הנתונים.</li>
+      </ul>
+
+      <h2>מידע אישי</h2>
+      <ul>
+        <li>פנקסי מרשם האוכלוסין מכילים מידע אישי. הארכיון מפרסם אותם רק לאחר שתמו תקופות ההגנה.</li>
+        <li>כאמצעי זהירות נוסף, <strong>רישומים מ־100 השנים האחרונות אינם מתפרסמים כאן</strong> (לפי תאריך האירוע, או כשהוא חסר — לפי השנה האחרונה של הפנקס).</li>
+        <li>האתר מבקש ממנועי החיפוש שלא לאנדקס את דפיו, והחיפוש פועל רק בדפדפן שלכם; איננו אוספים נתוני מבקרים ואיננו משתמשים בעוגיות.</li>
+        <li><strong>בקשות הסרה:</strong> אם רישום נוגע לכם או לקרוב משפחה ואתם מבקשים להסירו, <a href="https://github.com/costinfl/stare-civila-idx-finder/issues/new?template=removal-request.yml" rel="noopener">פתחו בקשת הסרה</a>. ההסרה חלה מהפרסום הבא של האתר. הנתונים נשארים זמינים בפורטל הארכיון.</li>
+      </ul>
+
+      <h2>שמות מקומות היסטוריים</h2>
+      <p>הדף <a href="places.html#lang=he">שמות מקומות היסטוריים</a> וחיפוש המקומות משתמשים בשמות ההונגריים, הגרמניים ואחרים של יישובי רומניה מתוך <a href="https://www.wikidata.org/" rel="noopener">ויקינתונים</a> (CC0), המתעדכנים מדי חודש. צורה חסרה או שגויה אפשר לתקן ישירות בוויקינתונים.</p>
+
+      <h2>דיוק</h2>
+      <p>מפתחות IDX הם העתקות ועלולים להכיל טעויות; גם החילוץ האוטומטי מקובצי ה־PDF עלול להוסיף שגיאות. בדקו תמיד את הסריקה המקורית של הפנקס. אפשר לדווח על טעויות בלחצן <em>דיווח</em> שליד כל תוצאה. האתר מסופק „כמות שהוא”, ללא אחריות.</p>
+
+      <p class="muted">יצירת קשר: <a href="https://github.com/costinfl/stare-civila-idx-finder/issues" rel="noopener">GitHub issues</a>. טקסט זה אינו ייעוץ משפטי. במקרה של סתירה בין הגרסאות, הנוסח הרומני קובע. נשמח לתיקונים בתרגום.</p>
+    </div>
+  </article>
 </main>
 <script>
 (() => {
-  const get = () => { try { return localStorage.getItem("lang"); } catch { return null; } };
-  const set = (v) => { try { localStorage.setItem("lang", v); } catch {} };
-  const fromHash = new URLSearchParams(location.hash.slice(1)).get("lang");
-  const LANGS = ["ro", "hu", "en"], TITLES = { ro: "Despre", hu: "Névjegy", en: "About" };
-  const browser = (navigator.language || "").toLowerCase();
-  let lang = fromHash || get() || (browser.startsWith("hu") ? "hu" : browser.startsWith("ro") ? "ro" : "en");
+  const TITLES = { ro: "Despre", hu: "Névjegy", de: "Über", en: "About", tr: "Hakkında", crh: "Haqqında", rom: "Pa amende", he: "אודות" };
+  let lang = SiteLang.pick();
   function apply() {
-    if (!LANGS.includes(lang)) lang = "ro";
-    document.documentElement.lang = lang;
-    for (const l of LANGS) {
-      document.getElementById(`content-${l}`).hidden = lang !== l;
-      document.getElementById(`lang-${l}`).setAttribute("aria-pressed", lang === l);
-    }
+    lang = SiteLang.apply(lang);
+    for (const l of SiteLang.CODES) document.getElementById(`content-${l}`).hidden = lang !== l;
     document.getElementById("back").href = `index.html#lang=${lang}`;
     document.title = `${TITLES[lang]} · Stare Civilă IDX Finder`;
   }
-  for (const v of LANGS) document.getElementById(`lang-${v}`).onclick = () => { lang = v; set(v); history.replaceState(null, "", `#lang=${v}`); apply(); };
+  SiteLang.mount(document.getElementById("lang-menu"), (code) => { lang = code; history.replaceState(null, "", `#lang=${code}`); apply(); });
+  window.addEventListener("hashchange", () => { lang = SiteLang.pick(); apply(); });
   apply();
 })();
 </script>

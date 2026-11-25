@@ -27,7 +27,7 @@ Only registers with an IDX file are indexed. For everything else (scans only), t
 
 ### Languages and historical place names
 
-The site is available in Romanian, Hungarian and English (switch in the header; Hungarian also shows counties as e.g. “Bihor (Bihar)”). `places_build.py` builds `site/data/places.json` — Hungarian, German and other historical names of ~17,000 Romanian settlements from Wikidata (CC0) — used by the **Historical names** page (`site/places.html`) and by the Names-tab place search, which by default also searches a settlement's other names (Salonta ↔ Nagyszalonta). It is built by the *Build place names* workflow (monthly and on demand).
+The site is available in Romanian, Hungarian, German, English, Turkish, Crimean Tatar, Romani and Hebrew (flag menu in the header; first visits use the browser's language when it is one of these, otherwise Romanian). Hungarian and German also show counties as e.g. “Bihor (Bihar)” and “Sibiu (Hermannstadt)”; Hebrew is laid out right to left. The language list and menu live in `site/lang.js`, the strings in each page's `I18N` table (`tests/i18n.test.mjs` checks that every language has every key). The Crimean Tatar and Romani translations are marked as under review; corrections to any translation are welcome as issues. `places_build.py` builds `site/data/places.json` — Hungarian, German and other historical names of ~17,000 Romanian settlements from Wikidata (CC0) — used by the **Historical names** page (`site/places.html`) and by the Names-tab place search, which by default also searches a settlement's other names (Salonta ↔ Nagyszalonta). It is built by the *Build place names* workflow (monthly and on demand).
 
 ### Name index
 
