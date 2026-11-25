@@ -44,6 +44,8 @@ for (const page of ["index.html", "places.html"]) {
 
 const about = read("site/about.html");
 for (const code of codes) if (!about.includes(`<article lang="${code}" id="content-${code}"`)) fail(`about.html: no article for ${code}`);
+// Every About article discloses the visit counter.
+for (const m of about.matchAll(/<article lang="([a-z]+)"[\s\S]*?<\/article>/g)) if (!m[0].includes("goatcounter.com")) fail(`about.html ${m[1]}: no GoatCounter disclosure`);
 const theme = read("site/theme.js");
 for (const code of codes) if (!new RegExp(`\\n\\s+${code}: \\{ system:`).test(theme)) fail(`theme.js: no labels for ${code}`);
 
