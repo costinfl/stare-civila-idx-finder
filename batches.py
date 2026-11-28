@@ -230,18 +230,11 @@ def main() -> None:
     if args.stats:
         all_done = all_total = 0
         for county in server.COUNTIES:
-            done = {}
-            for path in sorted((args.store / names.code(county["prefix"])).glob("*.jsonl")):
-                for line in path.read_text(encoding="utf-8").splitlines():
-                    try:
-                        item = json.loads(line)
-                    except json.JSONDecodeError:
-                        continue
-                    done[item["id"]] = item
+            done = register_status(args.store / names.code(county["prefix"]))
             total = len(catalogue.get(county["prefix"], []))
             all_done += len(done); all_total += total
             if done:
-                errors = sum(1 for i in done.values() if i.get("error"))
+                errors = sum(1 for ok in done.values() if not ok)
                 print(f"{county['name']:<16} {len(done):>6}/{total:<6} registers  {errors} errors")
         print(f"{'Total':<16} {all_done:>6}/{all_total:<6} registers")
         return
@@ -255,17 +248,9 @@ def main() -> None:
         if args.ids:
             records = [r for r in records if r in set(args.ids)]
         folder = args.store / names.code(county["prefix"])
-        done = set()
-        for path in folder.glob("*.jsonl"):
-            for line in path.read_text(encoding="utf-8").splitlines():
-                try:
-                    item = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if item.get("error") and args.retry_errors:
-                    done.discard(item["id"])
-                else:
-                    done.add(item["id"])
+        # A register is done once any attempt succeeded; --retry-errors only
+        # retries registers that never succeeded (same rule as names.load_done).
+        done = names.load_done(folder, args.retry_errors)
         todo = [r for r in records if r not in done]
         if args.limit and len(todo) > args.limit:
             todo = [todo[int(i * len(todo) / args.limit)] for i in range(args.limit)] if args.sample else todo[: args.limit]
@@ -277,6 +262,14 @@ def main() -> None:
             if not crawl(todo, sink, county["name"], deadline, max(1, args.workers)):
                 print("Time budget reached; run again to resume.")
                 return
+
+
+def register_status(folder: Path) -> dict[int, bool]:
+    """Record id -> True if any stored attempt succeeded (whatever the file order)."""
+    status: dict[int, bool] = {}
+    for item in names.county_items(folder):
+        status[item["id"]] = status.get(item["id"], False) or not item.get("error")
+    return status
 
 
 def safe_probe(record_id: int) -> dict:
